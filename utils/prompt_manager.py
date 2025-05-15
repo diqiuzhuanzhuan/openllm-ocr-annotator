@@ -37,6 +37,7 @@ class PromptManager:
             
         self.config_path = config_path
         self.load_config()
+        self.default_variables = self.config.get('variables', {})
     
     def load_config(self) -> None:
         if not os.path.exists(self.config_path):
@@ -79,12 +80,13 @@ class PromptManager:
         else:
             raise ValueError(f"No template found for model={model}, task={task}")
         
-        # If no variables provided, return template as-is
-        if not variables:
-            return template
+        # merge default variables with custom variables
+        merged_variables = self.default_variables.copy()
+        if variables:
+            merged_variables.update(variables)
         
         # Process variables in both system and user prompts
         return {
-            "system": self._replace_variables(template["system"], variables),
-            "user": self._replace_variables(template["user"], variables)
+            "system": self._replace_variables(template["system"], merged_variables),
+            "user": self._replace_variables(template["user"], merged_variables)
         }

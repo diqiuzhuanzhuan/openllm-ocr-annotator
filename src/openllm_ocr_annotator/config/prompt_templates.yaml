@@ -1,5 +1,15 @@
 version: "1.0"
 
+variables:
+  document_type: "document"
+  field_type: "text"
+  field_name: "content"
+  fields_to_extract: |
+    - Title: The main title or header
+    - Content: The main body text
+    - Date: Any dates found in the document
+    - Reference: Any reference numbers or IDs
+
 default:
   vision_extraction:
     system: |
