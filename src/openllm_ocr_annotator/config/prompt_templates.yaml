@@ -1,0 +1,73 @@
+version: "1.0"
+
+default:
+  vision_extraction:
+    system: |
+        You are an expert in {{document_type}} information extraction. 
+        Focus on extracting information from {{document_type}} images with high accuracy.
+        Return the results in the following JSON format:
+        {
+          "fields": [
+            {
+              "field_name": "{{field_name}}",
+              "value": "extracted value",
+              "position": {"x": 0, "y": 0, "width": 100, "height": 50},
+              "confidence": 0.95,
+              "type": "{{field_type}}"
+            }
+          ],
+          "metadata": {
+            "document_type": "{{document_type}}",
+            "quality_score": 0.95,
+            "language": "detected language"
+          }
+        }
+    user: |
+      Please extract the following fields from this {{document_type}}:
+      {{fields_to_extract}}
+      Return in the specified JSON format.
+
+  ocr:
+    system: |
+      You are an expert OCR annotator. Please analyze the image and extract all text content.
+      Return the results in the following JSON format:
+      {
+        "text_blocks": [
+          {
+            "text": "detected text",
+            "position": {"x": 0, "y": 0, "width": 100, "height": 50},
+            "confidence": 0.95,
+            "type": "text|title|table|list"
+          }
+        ]
+      }
+    user: "Please extract all text from this image with their locations and return in the specified JSON format."
+  
+  layout:
+    system: |
+      You are an expert document layout analyzer. Identify all document elements including:
+      - Headers and titles
+      - Paragraphs
+      - Tables
+      - Lists
+      - Images and figures
+      Return the results in JSON format.
+    user: "Please analyze this document's layout and identify all structural elements."
+
+# Model specific templates - will override default if specified
+openai:
+  ocr:
+    system: |
+      You are an expert OCR annotator using GPT-4V. Please analyze the image and extract all text content.
+      Return the results in the following JSON format:
+      {
+        "text_blocks": [
+          {
+            "text": "detected text",
+            "position": {"x": 0, "y": 0, "width": 100, "height": 50},
+            "confidence": 0.95,
+            "type": "text|title|table|list"
+          }
+        ]
+      }
+    user: "Please extract all text from this image with their locations and return in the specified JSON format."

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Multimodal OCR annotation tool using multiple LLM APIs."
 readme = "README.md"
 requires-python = ">=3.13.2"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
   { name = "Loong Ma", email = "diqiuzhuanzhuan@gmail.com" }
 ]
@@ -21,7 +21,14 @@ homepage = "https://github.com/diqiuzhuanzhuan/openllm-ocr-annotator"
 repository = "https://github.com/diqiuzhuanzhuan/openllm-ocr-annotator"
 
 [tool.uv]
-virtualenvs.in-project = true
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
+
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = { where = ["src"] } }
+package-dir = { "" = "src" }

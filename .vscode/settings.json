@@ -1,0 +1,5 @@
+{
+  "files.exclude": {
+    "src/openllm_ocr_annotator.egg-info": true
+  }
+}
