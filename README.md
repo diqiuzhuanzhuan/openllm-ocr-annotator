@@ -78,4 +78,4 @@ Feel free to submit issues, feature requests, or pull requests. All contribution
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=diqiuzhuanzhuan/openllm-ocr-annotator&type=Date)](https://star-history.com/#diqiuzhuanzhuan/openllm-ocr-annotator&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=diqiuzhuanzhuan/openllm-ocr-annotator&type=Date)](https://www.star-history.com/#diqiuzhuanzhuan/openllm-ocr-annotator&Date)
