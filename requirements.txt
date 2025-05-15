@@ -1,0 +1,6 @@
+openai
+requests
+pillow
+pyyaml
+matplotlib
+tqdm
