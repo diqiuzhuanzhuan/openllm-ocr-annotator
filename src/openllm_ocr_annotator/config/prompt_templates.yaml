@@ -9,6 +9,39 @@ variables:
     - Content: The main body text
     - Date: Any dates found in the document
     - Reference: Any reference numbers or IDs
+  example_prompt: |
+    Example: For a receipt or invoice, extract the total amount, date, and items purchased.
+    You will return the results in the following JSON format:
+    {
+      "fields": [
+        {
+          "field_name": "total_amount",
+          "value": "extracted value",
+          "position": {"x": 0, "y": 0, "width": 100, "height": 50},
+          "confidence": 0.91,
+          "type": "text"
+        },
+        {
+          "field_name": "date",
+          "value": "extracted value",
+          "position": {"x": 0, "y": 0, "width": 100, "height": 50},
+          "confidence": 0.92,
+          "type": "text"
+        },
+        {
+          "field_name": "items",
+          "value": "extracted value",
+          "position": {"x": 0, "y": 0, "width": 100, "height": 50},
+          "confidence": 0.95,
+          "type": "text"
+        }
+      ],
+      "metadata": {
+        "document_type": "receipt",
+        "quality_score": 0.95,
+        "language": "english"
+      }
+    }
 
 default:
   vision_extraction:
@@ -35,6 +68,7 @@ default:
     user: |
       Please extract the following fields from this {{document_type}}:
       {{fields_to_extract}}
+      {{example_prompt}}
       Return in the specified JSON format.
 
   ocr:
@@ -66,6 +100,82 @@ default:
 
 # Model specific templates - will override default if specified
 openai:
+  vision_extraction:
+    system: |
+      You are an expert in foreign trade document analysis. Your task is to extract key information 
+      from Chinese foreign trade documents with high precision. Pay special attention to:
+      1. Document identifiers and numbers
+      2. Dates in standard formats
+      3. Company names and addresses
+      4. Transaction amounts and currencies
+      5. Geographic information
+
+    user: |
+      Analyze this foreign trade document and extract the following specific fields:
+
+      Required Fields:
+      1. Document Number
+         - Format: Any alphanumeric identifier
+         - Example: "CONTRACT-2024-001" or "FT20240101"
+      
+      2. Contract Date
+         - Format: yyyy-mm-dd
+         - Example: "2024-01-01"
+      
+      3. Buyer's Name
+         - Format: Full company/entity name
+         - Example: "ABC Trading Company Ltd."
+      
+      4. Buyer's Country/Region
+         - Format: Three-letter country code (ISO 3166-1 alpha-3)
+         - Example: "USA" for United States, "GBR" for United Kingdom
+         - Note: Infer from address or contact details if not explicitly stated
+      
+      5. Transaction Amount
+         - Format: Number with 2 decimal places + three-letter currency code
+         - Example: "1234.56 USD" or "9876.54 EUR"
+
+      Rules:
+      - Use "N/A" for any field where information is not found or unclear
+      - For country codes, infer from address or contact details if not explicitly stated
+      - Currency codes must follow ISO 4217 standard
+
+      Return the results in this exact JSON format:
+      {
+        "fields": [
+          {
+            "field_name": "document_number",
+            "value": "extracted value",
+            "confidence": 0.95
+          },
+          {
+            "field_name": "contract_date",
+            "value": "yyyy-mm-dd",
+            "confidence": 0.95
+          },
+          {
+            "field_name": "buyer_name",
+            "value": "company name",
+            "confidence": 0.95
+          },
+          {
+            "field_name": "buyer_country",
+            "value": "XXX",
+            "confidence": 0.95
+          },
+          {
+            "field_name": "transaction_amount",
+            "value": "1234.56 XXX",
+            "confidence": 0.95
+          }
+        ],
+        "metadata": {
+          "document_type": "foreign_trade",
+          "language": "detected language"
+        }
+      }
+
+      
   ocr:
     system: |
       You are an expert OCR annotator using GPT-4V. Please analyze the image and extract all text content.
