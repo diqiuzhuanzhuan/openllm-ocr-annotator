@@ -33,7 +33,7 @@ class PromptManager:
     def __init__(self, config_path: Optional[str] = None):
         if config_path is None:
             root_dir = Path(__file__).parent.parent
-            config_path = root_dir / "config" / "prompt_templates.yaml"
+            config_path = root_dir / "src"/ "openllm_ocr_annotator" / "config" / "prompt_templates.yaml"
             
         self.config_path = config_path
         self.load_config()
