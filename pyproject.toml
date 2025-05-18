@@ -13,7 +13,9 @@ dependencies = [
   "requests",
   "pillow",
   "pyyaml",
-  "tqdm"
+  "tqdm",
+  "anthropic",
+  "google-genai",
 ]
 
 [project.urls]

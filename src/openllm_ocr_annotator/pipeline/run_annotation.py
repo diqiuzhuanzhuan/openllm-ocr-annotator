@@ -23,9 +23,13 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict
 from tqdm import tqdm
-
-from ..annotators.openai import OpenAIAnnotator
-from ....utils.formatter import save_as_jsonl, save_as_tsv
+from typing import List
+from src.openllm_ocr_annotator.voters.majority import MajorityVoter
+from src.openllm_ocr_annotator.voters.manager import VotingManager
+from openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
+from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
+from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
+from utils.formatter import save_as_jsonl, save_as_tsv
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,68 +37,48 @@ logger = logging.getLogger(__name__)
 def run_batch_annotation(
     input_dir: str,
     output_dir: str,
-    api_key: Optional[str] = None,
-    task: str = "vision_extraction",
-    variables: Optional[Dict[str, str]] = None,
-    formats: Optional[list] = None
+    annotator_configs: List[Dict],
+    voting_strategy: str = "majority",
+    **kwargs
 ) -> None:
-    """Run batch annotation on all images in input directory.
+    """Run batch annotation with separate annotation and voting phases."""
     
-    Args:
-        input_dir: Directory containing input images
-        output_dir: Directory for output files
-        api_key: Optional OpenAI API key
-        task: Annotation task type
-        variables: Optional template variables
-        formats: List of output formats (default: ["jsonl", "tsv"])
-    """
     try:
-        # Initialize annotator
-        annotator = OpenAIAnnotator(
-            api_key=api_key,
-            task=task
-        )
+        # Initialize annotators
+        annotators = []
+        for config in annotator_configs:
+            if config["type"] == "openai":
+                annotators.append(OpenAIAnnotator(config["api_key"], model=config.get("model")))
+            elif config["type"] == "claude":
+                annotators.append(ClaudeAnnotator(config["api_key"], model=config.get("model")))
+            elif config["type"] == "gemini":
+                annotators.append(GeminiAnnotator(config["api_key"], model=config.get("model")))
+                
+        # Initialize voter and manager
+        voter = MajorityVoter()
+        voting_manager = VotingManager(annotators, voter)
         
-        # Create output directories
-        formats = formats or ["jsonl", "tsv"]
-        output_paths = {}
-        for fmt in formats:
-            path = Path(output_dir) / fmt
-            path.mkdir(parents=True, exist_ok=True)
-            output_paths[fmt] = path
-            
-        # Get list of image files
-        image_files = [
-            f for f in Path(input_dir).iterdir()
-            if f.suffix.lower() in (".png", ".jpg", ".jpeg")
-        ]
+        # Create output directory
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
         
-        if not image_files:
-            logger.warning(f"No image files found in {input_dir}")
-            return
-            
-        # Process each image
+        # Process images
+        image_files = get_image_files(input_dir)
+
         for img_path in tqdm(image_files, desc="Processing images"):
             try:
-                logger.info(f"Processing {img_path.name}")
+                logger.info(f"\nProcessing {img_path.name}")
                 
-                # Get annotation result
-                result = annotator.annotate(
+                # Get or compute voted result
+                result = voting_manager.get_voted_result(
                     str(img_path),
-                    variables=variables
+                    output_path
                 )
                 
-                # Save in requested formats
-                if "jsonl" in formats:
-                    output_file = output_paths["jsonl"] / f"{img_path.stem}.jsonl"
-                    save_as_jsonl(result, str(output_file))
-                    
-                if "tsv" in formats:
-                    output_file = output_paths["tsv"] / f"{img_path.stem}.tsv"
-                    save_as_tsv(result, str(output_file))
-                    
+                logger.info(f"Successfully processed {img_path.name}")
+                
             except Exception as e:
-                logger.error(f"Error processing {img_path.name}: {str(e)}")
+                logger.error(f"Error processing {img_path}: {e}")
                 continue
                 
         logger.info(f"Completed processing {len(image_files)} images")
@@ -105,17 +89,27 @@ def run_batch_annotation(
 
 if __name__ == "__main__":
     # Example usage
+    annotator_configs = [
+    {
+        "type": "openai",
+        "api_key": "sk-xxx",
+        "model": "gpt-4-vision-preview"
+    },
+    {
+        "type": "claude",
+        "api_key": "sk-yyy",
+        "model": "claude-3-opus-20240229"
+    },
+    {
+        "type": "gemini",
+        "api_key": "sk-zzz",
+        "model": "gemini-pro-vision"
+    }
+    ]
+
     run_batch_annotation(
         input_dir="data/images",
         output_dir="data/outputs",
-        task="vision_extraction",
-        variables={
-            "document_type": "invoice",
-            "fields_to_extract": """
-                - Invoice Number
-                - Total Amount
-                - Date
-                - Vendor Name
-            """
-        }
+        annotator_configs=annotator_configs,
+        voting_strategy="majority"
     )
