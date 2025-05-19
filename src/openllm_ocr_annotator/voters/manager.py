@@ -31,6 +31,40 @@ class VotingManager:
     def __init__(self, annotators: List[BaseAnnotator], voter: BaseVoter):
         self.annotators = annotators
         self.voter = voter
+    
+    def collect_annotations(self, results_dir: Path, image_stem: str) -> Dict[str, Dict]:
+        """Collect existing annotation results for an image.
+        
+        Args:
+            results_dir: Directory containing annotation results
+            image_stem: Image name without extension
+            
+        Returns:
+            Dict mapping "annotator_name/model_version" to their results
+        """
+        results = {}
+        for annotator in self.annotators:
+            annotator_name = annotator.__class__.__name__
+            # Get model version from annotator if available, default to "default"
+            model_version = getattr(annotator, "model", "default") 
+            annotator_dir = results_dir / annotator_name / model_version
+            result_path = annotator_dir / f"{image_stem}.json"
+            
+            try:
+                if result_path.exists():
+                    with open(result_path, 'r') as f:
+                        result_key = f"{annotator_name}/{model_version}"
+                        results[result_key] = json.load(f)
+            except Exception as e:
+                logger.error(f"Error loading {result_path}: {e}")
+                continue
+                
+        if not results:
+            logger.warning(f"No annotation results found for {image_stem}")
+        else:
+            logger.info(f"Found {len(results)} annotation results for {image_stem}")
+            
+        return results
 
     def annotate_with_all(self, image_path: str, output_dir: Path) -> Dict[str, Dict]:
         """Run annotation with all annotators and save individual results.
@@ -40,38 +74,41 @@ class VotingManager:
             output_dir: Directory to save individual results
             
         Returns:
-            Dict mapping annotator names to their results
+            Dict mapping "annotator_name/model_version" to their results
         """
         results = {}
         img_path = Path(image_path)
         
         for annotator in self.annotators:
             annotator_name = annotator.__class__.__name__
+            # Get model version from annotator
+            model_version = getattr(annotator, "model", "default")
             try:
-                # Create directory for this annotator if not exists
-                annotator_dir = output_dir / annotator_name
+                # Create directory for this annotator/model if not exists
+                annotator_dir = output_dir / annotator_name / model_version
                 annotator_dir.mkdir(parents=True, exist_ok=True)
                 
                 # Define output path for this image
                 result_path = annotator_dir / f"{img_path.stem}.json"
+                result_key = f"{annotator_name}/{model_version}"
                 
                 # If result exists, load it; otherwise annotate
                 if result_path.exists():
-                    logger.info(f"Loading existing result for {annotator_name}")
+                    logger.info(f"Loading existing result for {result_key}")
                     with open(result_path, 'r') as f:
-                        results[annotator_name] = json.load(f)
+                        results[result_key] = json.load(f)
                 else:
-                    logger.info(f"Running annotation with {annotator_name}")
+                    logger.info(f"Running annotation with {result_key}")
                     result = annotator.annotate(str(img_path))
                     
                     # Save individual result
                     with open(result_path, 'w') as f:
                         json.dump(result, f, indent=2, ensure_ascii=False)
                     
-                    results[annotator_name] = result
+                    results[result_key] = result
                     
             except Exception as e:
-                logger.error(f"Error with {annotator_name}: {e}")
+                logger.error(f"Error with {annotator_name}/{model_version}: {e}")
                 continue
                 
         return results
@@ -84,7 +121,7 @@ class VotingManager:
             output_dir: Directory containing individual results
             
         Returns:
-            Voted result
+            Dict with voted result and metadata
         """
         img_path = Path(image_path)
         voted_dir = output_dir / "voted_results"
@@ -102,8 +139,16 @@ class VotingManager:
         if not results:
             raise ValueError("No valid annotations to vote on")
             
-        # Run voting
-        voted_result = self.voter.vote(list(results.values()))
+        # Run voting with annotator IDs
+        annotator_ids = list(results.keys())
+        annotations = list(results.values())
+        
+        voted_result = {
+            "result": self.voter.vote(annotations, annotator_ids),
+            "metadata": {
+                "annotators": annotator_ids  # List of annotator_name/model_version used
+            }
+        }
         
         # Save voted result
         with open(voted_path, 'w') as f:

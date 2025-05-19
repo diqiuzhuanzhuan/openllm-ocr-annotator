@@ -22,7 +22,7 @@ import logging
 from pathlib import Path
 import multiprocessing as mp
 from typing import List, Dict
-from .annotator_processor import AnnotatorProcessor
+from src.openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -31,10 +31,14 @@ class ParallelProcessor:
     """Manages parallel processing of multiple annotators."""
     
     def __init__(self, annotators: List, output_dir: Path):
-        self.processors = [
-            AnnotatorProcessor(annotator, output_dir)
-            for annotator in annotators
-        ]
+        self.processors = []
+        for annotator in annotators:
+            # Create AnnotatorProcessor for each annotator
+            processor = AnnotatorProcessor(annotator, output_dir)
+            # Add model version info for logging
+            model_version = getattr(annotator, "model", "default")
+            processor.annotator_name = f"{annotator.__class__.__name__}/{model_version}"
+            self.processors.append(processor)
         self.output_dir = output_dir
     
     def run_annotator_process(self, processor: AnnotatorProcessor, image_files: List[Path]):

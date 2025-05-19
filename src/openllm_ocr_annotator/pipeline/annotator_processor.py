@@ -25,16 +25,34 @@ import json
 from typing import List, Dict
 from tqdm import tqdm
 import multiprocessing as mp
+from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
 
 logger = logging.getLogger(__name__)
 
 class AnnotatorProcessor:
     """Processor for running single annotator on images."""
     
-    def __init__(self, annotator, output_dir: Path):
+    def __init__(self, annotator: BaseAnnotator, output_dir: Path):
+        """Initialize the processor with an annotator and output directory.
+        
+        Args:
+            annotator (BaseAnnotator): The annotator to process images with
+            output_dir (Path): Base output directory for results
+        """
         self.annotator = annotator
-        self.output_dir = output_dir / annotator.__class__.__name__
+        # Create output directory structure: {annotator_type}/{model_version}/
+        model_version = getattr(annotator, "model", "default")
+        self.output_dir = output_dir / annotator.__class__.__name__ / model_version
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def process_images(self, image_files: List[Path]):
+        """Process a list of images with the annotator."""
+        """
+        Args:
+            image_files (List[Path]): List of image file paths to process. 
+        """
+        for img_path in tqdm(image_files, desc=f"Processing with {self.annotator.__class__.__name__}", unit="image"):
+            self.process_single_image(str(img_path))
     
     def process_single_image(self, image_path: str) -> Dict:
         """Process single image and save result."""
