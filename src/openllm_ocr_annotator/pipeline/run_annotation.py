@@ -18,31 +18,53 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
+import time
 import logging
 from pathlib import Path
 from typing import Optional, Dict
 from tqdm import tqdm
 from typing import List
 from src.openllm_ocr_annotator.voters.majority import MajorityVoter
+from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
 from src.openllm_ocr_annotator.voters.manager import VotingManager
 from openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
 from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
 from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
+from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
 from utils.formatter import save_as_jsonl, save_as_tsv
+from utils.file_utils import get_image_files
+from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def run_batch_annotation(
     input_dir: str,
     output_dir: str,
     annotator_configs: List[Dict],
+    task_id: str,  # 添加任务标识符
     voting_strategy: str = "majority",
+    voting_weights: Optional[Dict[str, float]] = None,
+    format: str | List[str] = "jsonl",
     **kwargs
 ) -> None:
-    """Run batch annotation with separate annotation and voting phases."""
+    """Run batch annotation with parallel processing.
     
+    Args:
+        input_dir: Directory containing input images
+        output_dir: Directory for output files
+        annotator_configs: List of annotator configurations
+        task_id: Unique identifier for the annotation task
+        voting_strategy: Strategy for voting ("majority" or "weighted")
+        voting_weights: Optional weights for weighted voting strategy.
+                      Example: {
+                          "OpenAIAnnotator/gpt-4-vision-preview": 1.0,
+                          "OpenAIAnnotator/gpt-3.5-turbo-vision": 0.8,
+                          "ClaudeAnnotator/claude-3-opus": 0.9
+                      }
+        format: Output format(s)
+    """
     try:
         # Initialize annotators
         annotators = []
@@ -53,63 +75,113 @@ def run_batch_annotation(
                 annotators.append(ClaudeAnnotator(config["api_key"], model=config.get("model")))
             elif config["type"] == "gemini":
                 annotators.append(GeminiAnnotator(config["api_key"], model=config.get("model")))
-                
-        # Initialize voter and manager
-        voter = MajorityVoter()
-        voting_manager = VotingManager(annotators, voter)
         
-        # Create output directory
-        output_path = Path(output_dir)
+        # Create output directory with task_id
+        output_path = Path(output_dir) / task_id
         output_path.mkdir(parents=True, exist_ok=True)
         
-        # Process images
+        # Get image files
         image_files = get_image_files(input_dir)
-
-        for img_path in tqdm(image_files, desc="Processing images"):
+        if not image_files:
+            logger.warning(f"No images found in {input_dir}")
+            return
+        
+        # Run parallel annotation
+        processor = ParallelProcessor(annotators, output_path)
+        processor.run_parallel(image_files)
+        
+        # After all annotations are complete, run voting
+        if voting_strategy == "majority":
+            voter = MajorityVoter()
+        elif voting_strategy == "weighted":
+            voter = WeightedVoter(weights=voting_weights)
+        else:
+            raise ValueError(f"Unknown voting strategy: {voting_strategy}")
+            
+        voting_manager = VotingManager(annotators, voter)
+        
+        # Process voting for each image
+        voted_dir = output_path / "voted_results"
+        voted_dir.mkdir(exist_ok=True)
+        
+        for img_path in tqdm(image_files, desc="Computing voting results"):
             try:
-                logger.info(f"\nProcessing {img_path.name}")
+                # Get voted result
+                result = voting_manager.get_voted_result(output_path, img_path.stem)
                 
-                # Get or compute voted result
-                result = voting_manager.get_voted_result(
-                    str(img_path),
-                    output_path
-                )
+                # Add task metadata
+                result["task_metadata"] = {
+                    "task_id": task_id,
+                    "image_path": str(img_path),
+                    "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+                }
                 
-                logger.info(f"Successfully processed {img_path.name}")
+                # Save voted result in requested formats
+                if "jsonl" in format:
+                    save_as_jsonl(result, voted_dir / f"{img_path.stem}.jsonl")
+                if "tsv" in format:
+                    save_as_tsv(result, voted_dir / f"{img_path.stem}.tsv")
                 
             except Exception as e:
-                logger.error(f"Error processing {img_path}: {e}")
+                logger.error(f"Error in voting for {img_path}: {e}")
                 continue
-                
-        logger.info(f"Completed processing {len(image_files)} images")
+        
+        logger.info(f"Completed task {task_id} with {len(image_files)} images")
         
     except Exception as e:
-        logger.error(f"Batch annotation failed: {str(e)}")
+        logger.error(f"Task {task_id} failed: {str(e)}")
         raise
 
 if __name__ == "__main__":
-    # Example usage
+    # Example usage with different model versions and weights
     annotator_configs = [
-    {
-        "type": "openai",
-        "api_key": "sk-xxx",
-        "model": "gpt-4-vision-preview"
-    },
-    {
-        "type": "claude",
-        "api_key": "sk-yyy",
-        "model": "claude-3-opus-20240229"
-    },
-    {
-        "type": "gemini",
-        "api_key": "sk-zzz",
-        "model": "gemini-pro-vision"
-    }
+        # GPT-4 Vision Preview - Most accurate but expensive
+        {
+            "type": "openai",
+            "api_key": "sk-xxx",
+            "model": "gpt-4-vision-preview"
+        },
+        # GPT-3.5 Turbo Vision - Fast but less accurate
+        {
+            "type": "openai",
+            "api_key": "sk-xxx",
+            "model": "gpt-3.5-turbo-vision"
+        },
+        # Claude 3 Opus - Strong capabilities
+        {
+            "type": "claude",
+            "api_key": "sk-yyy",
+            "model": "claude-3-opus-20240229"
+        },
+        # Claude 3 Sonnet - Good balance
+        {
+            "type": "claude",
+            "api_key": "sk-yyy",
+            "model": "claude-3-sonnet-20240229"
+        },
+        # Gemini Pro Vision - Reliable baseline
+        {
+            "type": "gemini",
+            "api_key": "sk-zzz",
+            "model": "gemini-pro-vision"
+        }
     ]
 
+    # Configure weights based on model capabilities
+    weights = {
+        "OpenAIAnnotator/gpt-4-vision-preview": 1.0,    # Highest weight for best accuracy
+        "OpenAIAnnotator/gpt-3.5-turbo-vision": 0.7,    # Lower weight due to limitations
+        "ClaudeAnnotator/claude-3-opus-20240229": 0.95, # Very high confidence
+        "ClaudeAnnotator/claude-3-sonnet-20240229": 0.8,# Good balance
+        "GeminiAnnotator/gemini-pro-vision": 0.75       # Reliable baseline
+    }
+
+    # Run batch annotation with weighted voting
     run_batch_annotation(
         input_dir="data/images",
         output_dir="data/outputs",
+        task_id="foreign_trade_20250519",
         annotator_configs=annotator_configs,
-        voting_strategy="majority"
+        voting_strategy="weighted",
+        voting_weights=weights
     )
