@@ -63,32 +63,57 @@ class WeightedVoter(BaseVoter):
         
         # Use default annotator IDs if none provided
         if not annotator_ids:
-            logger.warning("No annotator IDs provided, using equal weights")
-            annotator_ids = [f"annotator_{i}" for i in range(len(annotations))]
+            logger.warning("No annotator IDs provided, using model names as IDs")
+            annotator_ids = [f"OpenAIAnnotator/{ann['model']}" for ann in annotations]
         
         if len(annotations) != len(annotator_ids):
             raise ValueError("Number of annotations and annotator IDs must match")
 
-        results = {}
-        # Process each field in annotations
-        for field in annotations[0].keys():
-            # Create weighted counter
-            weighted_votes = defaultdict(float)
+        # Initialize results structure
+        voted_fields = defaultdict(lambda: defaultdict(float))
+        
+        # Process each annotation
+        for annotation, annotator_id in zip(annotations, annotator_ids):
+            # Get the weight for this annotator/model
+            weight = self.get_weight(annotator_id)
             
-            # Collect weighted votes for this field
-            for ann, ann_id in zip(annotations, annotator_ids):
-                if field not in ann:
+            # Get fields from the result
+            fields = annotation.get("result", {}).get("fields", [])
+            
+            # Process each field in the annotation
+            for field in fields:
+                field_name = field.get("field_name", None)
+                field_value = field.get("value", None)
+                field_confidence = field.get("confidence", 1.0)
+                
+                if not all([field_name, field_value]):
                     continue
-                    
-                value = ann[field]
-                weight = self.get_weight(ann_id)
-                weighted_votes[value] += weight
-            
-            if not weighted_votes:
-                logger.warning(f"No valid votes for field {field}")
+                
+                # Add weighted vote for this value
+                # Weight is multiplied by confidence if available
+                voted_fields[field_name][field_value] += weight * field_confidence
+        
+        # Compile final results
+        results = {
+            "fields": []
+        }
+        
+        # For each field, select the value with highest weighted votes
+        for field_name, value_votes in voted_fields.items():
+            if not value_votes:
                 continue
                 
-            # Find value with highest weighted votes
-            results[field] = max(weighted_votes.items(), key=lambda x: x[1])[0]
+            # Get value with highest weighted votes
+            best_value, best_weight = max(value_votes.items(), key=lambda x: x[1])
             
+            # Calculate confidence as normalized weight
+            total_weight = sum(value_votes.values())
+            confidence = best_weight / total_weight if total_weight > 0 else 0
+            
+            results["fields"].append({
+                "field_name": field_name,
+                "value": best_value,
+                "confidence": confidence
+            })
+        
         return results

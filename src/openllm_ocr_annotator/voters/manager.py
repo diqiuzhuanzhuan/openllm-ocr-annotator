@@ -17,19 +17,28 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 import json
 from pathlib import Path
-from typing import List, Dict
 import logging
 from typing import List, Dict
 from src.openllm_ocr_annotator.voters.base import BaseVoter
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
+import time
 
 logger = logging.getLogger(__name__)
 
 class VotingManager:
-    def __init__(self, annotators: List[BaseAnnotator], voter: BaseVoter):
-        self.annotators = annotators
+    def __init__(self, annotator_paths: List[Dict[str, str]], voter: BaseVoter):
+        """Initialize VotingManager.
+        
+        Args:
+            annotator_paths: List of dicts containing annotator paths, each with:
+                - 'name': Annotator name (e.g. 'OpenAIAnnotator')
+                - 'model': Model version (e.g. 'gpt-4-vision-preview')
+            voter: Voting strategy to use
+        """
+        self.annotator_paths = annotator_paths
         self.voter = voter
     
     def collect_annotations(self, results_dir: Path, image_stem: str) -> Dict[str, Dict]:
@@ -43,10 +52,9 @@ class VotingManager:
             Dict mapping "annotator_name/model_version" to their results
         """
         results = {}
-        for annotator in self.annotators:
-            annotator_name = annotator.__class__.__name__
-            # Get model version from annotator if available, default to "default"
-            model_version = getattr(annotator, "model", "default") 
+        for annotator_info in self.annotator_paths:
+            annotator_name = annotator_info['name']
+            model_version = annotator_info.get('model', 'default')
             annotator_dir = results_dir / annotator_name / model_version
             result_path = annotator_dir / f"{image_stem}.json"
             
@@ -66,54 +74,8 @@ class VotingManager:
             
         return results
 
-    def annotate_with_all(self, image_path: str, output_dir: Path) -> Dict[str, Dict]:
-        """Run annotation with all annotators and save individual results.
-        
-        Args:
-            image_path: Path to image file
-            output_dir: Directory to save individual results
-            
-        Returns:
-            Dict mapping "annotator_name/model_version" to their results
-        """
-        results = {}
-        img_path = Path(image_path)
-        
-        for annotator in self.annotators:
-            annotator_name = annotator.__class__.__name__
-            # Get model version from annotator
-            model_version = getattr(annotator, "model", "default")
-            try:
-                # Create directory for this annotator/model if not exists
-                annotator_dir = output_dir / annotator_name / model_version
-                annotator_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Define output path for this image
-                result_path = annotator_dir / f"{img_path.stem}.json"
-                result_key = f"{annotator_name}/{model_version}"
-                
-                # If result exists, load it; otherwise annotate
-                if result_path.exists():
-                    logger.info(f"Loading existing result for {result_key}")
-                    with open(result_path, 'r') as f:
-                        results[result_key] = json.load(f)
-                else:
-                    logger.info(f"Running annotation with {result_key}")
-                    result = annotator.annotate(str(img_path))
-                    
-                    # Save individual result
-                    with open(result_path, 'w') as f:
-                        json.dump(result, f, indent=2, ensure_ascii=False)
-                    
-                    results[result_key] = result
-                    
-            except Exception as e:
-                logger.error(f"Error with {annotator_name}/{model_version}: {e}")
-                continue
-                
-        return results
 
-    def get_voted_result(self, image_path: str, output_dir: Path) -> Dict:
+    def get_voted_result(self, image_path: Path, output_dir: Path) -> Dict:
         """Get or compute voted result from individual annotations.
         
         Args:
@@ -134,10 +96,10 @@ class VotingManager:
             with open(voted_path, 'r') as f:
                 return json.load(f)
         
-        # Get all individual results
-        results = self.annotate_with_all(image_path, output_dir)
+        # Collect existing annotations
+        results = self.collect_annotations(output_dir, img_path.stem)
         if not results:
-            raise ValueError("No valid annotations to vote on")
+            raise ValueError(f"No valid annotations found for {img_path.name}")
             
         # Run voting with annotator IDs
         annotator_ids = list(results.keys())
@@ -146,12 +108,9 @@ class VotingManager:
         voted_result = {
             "result": self.voter.vote(annotations, annotator_ids),
             "metadata": {
-                "annotators": annotator_ids  # List of annotator_name/model_version used
-            }
+                "annotators": annotator_ids,  # List of annotator_name/model_version used
+            },
         }
         
-        # Save voted result
-        with open(voted_path, 'w') as f:
-            json.dump(voted_result, f, indent=2, ensure_ascii=False)
             
         return voted_result

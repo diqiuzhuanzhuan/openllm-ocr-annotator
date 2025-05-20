@@ -24,8 +24,8 @@ from pathlib import Path
 import json
 from typing import List, Dict
 from tqdm import tqdm
-import multiprocessing as mp
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
+from utils.formatter import parse_json_from_text
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,10 @@ class AnnotatorProcessor:
         model_version = getattr(annotator, "model", "default")
         self.output_dir = output_dir / annotator.__class__.__name__ / model_version
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def get_output_dir(self) -> Path:
+        """Get the output directory for the current annotator."""
+        return self.output_dir
 
     def process_images(self, image_files: List[Path]):
         """Process a list of images with the annotator."""
@@ -66,8 +70,19 @@ class AnnotatorProcessor:
                 return json.load(f)
         
         try:
-            # Run annotation
+            # Run annotation and get result
             result = self.annotator.annotate(str(img_path))
+            # Parse result if it's a string, otherwise use as is
+            if isinstance(result, str):
+                result = parse_json_from_text(result)
+            elif isinstance(result, dict) and "result" in result:
+                # If result is a dict with "result" key, parse that if it's a string
+                if isinstance(result["result"], str):
+                    result["result"] = parse_json_from_text(result["result"])
+            
+            if not result['result']:
+                logger.warning(f"No valid annotation found for {img_path.name}")
+                return None
             
             # Save result
             with open(result_path, 'w') as f:

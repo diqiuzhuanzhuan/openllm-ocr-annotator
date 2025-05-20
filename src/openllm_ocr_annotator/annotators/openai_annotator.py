@@ -24,6 +24,7 @@ from openai import OpenAI
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
 from utils.prompt_manager import PromptManager
 import httpx
+from utils.retry import retry_with_backoff
 
 class OpenAIAnnotator(BaseAnnotator):
     """OpenAI GPT-4V based image annotator."""
@@ -49,7 +50,7 @@ class OpenAIAnnotator(BaseAnnotator):
             raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
         
         self.base_url = base_url
-        if not self.base_url:
+        if self.base_url:
             print(f"Warning: Using custom OpenAI API endpoint: {self.base_url}")
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.model = model
@@ -57,6 +58,7 @@ class OpenAIAnnotator(BaseAnnotator):
         self.max_tokens = max_tokens
         self.prompt_manager = PromptManager()
     
+    @retry_with_backoff(max_retries=3, initial_delay=2.0)
     def annotate(
         self, 
         image_path: str,
@@ -84,7 +86,6 @@ class OpenAIAnnotator(BaseAnnotator):
             
             # Encode image
             image_b64 = self._encode_image(image_path)
-            
             # Create API request
             response = self.client.chat.completions.create(
                 model=self.model,

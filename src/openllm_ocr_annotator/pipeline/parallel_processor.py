@@ -30,30 +30,66 @@ logger = logging.getLogger(__name__)
 class ParallelProcessor:
     """Manages parallel processing of multiple annotators."""
     
-    def __init__(self, annotators: List, output_dir: Path):
-        self.processors = []
-        for annotator in annotators:
-            # Create AnnotatorProcessor for each annotator
-            processor = AnnotatorProcessor(annotator, output_dir)
-            # Add model version info for logging
-            model_version = getattr(annotator, "model", "default")
-            processor.annotator_name = f"{annotator.__class__.__name__}/{model_version}"
-            self.processors.append(processor)
+    def __init__(self, annotator_configs: List[Dict], output_dir: Path):
+        """Initialize with annotator configurations instead of instances.
+        
+        Args:
+            annotator_configs: List of dictionaries containing annotator configurations
+            output_dir: Base output directory for results
+        """
+        self.annotator_configs = annotator_configs
         self.output_dir = output_dir
+
+    @staticmethod
+    def create_annotator(config: Dict):
+        """Create a new annotator instance from config."""
+        if config["type"] == "openai":
+            from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
+            return OpenAIAnnotator(
+                api_key=config["api_key"],
+                model=config.get("model"),
+                task=config.get("task", "vision_extraction"),
+                base_url=config.get("base_url", None)
+            )
+        elif config["type"] == "claude":
+            from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
+            return ClaudeAnnotator(
+                api_key=config["api_key"],
+                model=config.get("model"),
+                base_url=config.get("base_url", None)
+            )
+        elif config["type"] == "gemini":
+            from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
+            return GeminiAnnotator(
+                api_key=config["api_key"],
+                model=config.get("model"),
+                base_url=config.get("base_url", None)
+            )
+        else:
+            raise ValueError(f"Unknown annotator type: {config['type']}")
     
-    def run_annotator_process(self, processor: AnnotatorProcessor, image_files: List[Path]):
-        """Run single annotator process."""
-        for img_path in tqdm(image_files, desc=f"Processing with {processor.annotator_name}", unit="image"):
-            processor.process_single_image(str(img_path))
+    def run_annotator_process(self, config: Dict, image_files: List[Path]):
+        """Run single annotator process with fresh annotator instance."""
+        try:
+            # Create new annotator instance in this process
+            annotator = self.create_annotator(config)
+            model_version = getattr(annotator, "model", "default")
+            processor = AnnotatorProcessor(annotator, self.output_dir)
+            processor.annotator_name = f"{annotator.__class__.__name__}/{model_version}"
+            processor.process_images(image_files=image_files)
+                
+        except Exception as e:
+            logger.error(f"Error in annotator process: {e}")
+            raise
     
     def run_parallel(self, image_files: List[Path]):
         """Run all annotators in parallel."""
         processes = []
         
-        for processor in self.processors:
+        for config in self.annotator_configs:
             p = mp.Process(
                 target=self.run_annotator_process,
-                args=(processor, image_files)
+                args=(config, image_files)
             )
             p.start()
             processes.append(p)

@@ -117,6 +117,7 @@ openai:
       1. Document Number
          - Format: Any alphanumeric identifier
          - Example: "CONTRACT-2024-001" or "FT20240101"
+         - Note: As much as possible keep the original number
       
       2. Contract Date
          - Format: yyyy-mm-dd
@@ -125,6 +126,7 @@ openai:
       3. Buyer's Name
          - Format: Full company/entity name
          - Example: "ABC Trading Company Ltd."
+         - Note: As much as possible keep the original name.
       
       4. Buyer's Country/Region
          - Format: Three-letter country code (ISO 3166-1 alpha-3)
@@ -133,7 +135,7 @@ openai:
       
       5. Transaction Amount
          - Format: Number with 2 decimal places + three-letter currency code
-         - Example: "1234.56 USD" or "9876.54 EUR"
+         - Example: "123,44.50 USD" or "987,446.54 EUR"
 
       Rules:
       - Use "N/A" for any field where information is not found or unclear
@@ -165,13 +167,13 @@ openai:
           },
           {
             "field_name": "transaction_amount",
-            "value": "1234.56 XXX",
+            "value": "123,22.00 XXX",
             "confidence": 0.95
           }
         ],
         "metadata": {
           "document_type": "foreign_trade",
-          "language": "detected language"
+          "language": "English"
         }
       }
 
