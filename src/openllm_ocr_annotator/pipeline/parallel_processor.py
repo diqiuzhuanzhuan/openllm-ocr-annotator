@@ -18,14 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
+from utils.logger import setup_logger
 from pathlib import Path
 import multiprocessing as mp
 from typing import List, Dict
 from src.openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
 from tqdm import tqdm
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class ParallelProcessor:
     """Manages parallel processing of multiple annotators."""

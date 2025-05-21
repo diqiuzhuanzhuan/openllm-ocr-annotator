@@ -18,6 +18,8 @@ dependencies = [
   "google-genai",
   "qwenai",
   "mistralai",
+  "datasets",
+  "colorlog",
 ]
 
 [project.urls]

@@ -4,3 +4,5 @@ pillow
 pyyaml
 matplotlib
 tqdm
+colorlog
+datasets>=2.15.0  # For HuggingFace dataset support

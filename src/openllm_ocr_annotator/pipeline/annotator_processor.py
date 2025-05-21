@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 
-import logging
+from utils.logger import setup_logger
 from pathlib import Path
 import json
 from typing import List, Dict
@@ -27,7 +27,7 @@ from tqdm import tqdm
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
 from utils.formatter import parse_json_from_text
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class AnnotatorProcessor:
     """Processor for running single annotator on images."""
@@ -65,7 +65,7 @@ class AnnotatorProcessor:
         
         # Skip if already processed
         if result_path.exists():
-            logger.info(f"Loading cached result for {img_path.name}")
+            #logger.info(f"Loading cached result for {img_path.name}")
             with open(result_path, 'r') as f:
                 return json.load(f)
         

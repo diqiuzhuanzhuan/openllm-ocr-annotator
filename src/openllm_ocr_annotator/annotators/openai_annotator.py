@@ -25,6 +25,9 @@ from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
 from utils.prompt_manager import PromptManager
 import httpx
 from utils.retry import retry_with_backoff
+from utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class OpenAIAnnotator(BaseAnnotator):
     """OpenAI GPT-4V based image annotator."""
@@ -51,7 +54,7 @@ class OpenAIAnnotator(BaseAnnotator):
         
         self.base_url = base_url
         if self.base_url:
-            print(f"Warning: Using custom OpenAI API endpoint: {self.base_url}")
+            logger.warning(f"Warning: Using custom OpenAI API endpoint: {self.base_url}")
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.model = model
         self.task = task
@@ -122,6 +125,6 @@ class OpenAIAnnotator(BaseAnnotator):
             }
             
         except Exception as e:
-            raise Exception(f"Error during OpenAI annotation: {str(e)}")
+            raise Exception(f"Error during OpenAI annotation annotate {image_path}: {str(e)}")
 
             

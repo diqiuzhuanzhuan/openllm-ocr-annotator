@@ -70,7 +70,7 @@ class VotingManager:
         if not results:
             logger.warning(f"No annotation results found for {image_stem}")
         else:
-            logger.info(f"Found {len(results)} annotation results for {image_stem}")
+            logger.debug(f"Found {len(results)} annotation results for {image_stem}")
             
         return results
 
@@ -91,10 +91,10 @@ class VotingManager:
         voted_path = voted_dir / f"{img_path.stem}.json"
         
         # Check if voted result already exists
-        if voted_path.exists():
-            logger.info("Loading existing voted result")
-            with open(voted_path, 'r') as f:
-                return json.load(f)
+        #if voted_path.exists():
+        #    logger.info("Loading existing voted result")
+        #    with open(voted_path, 'r') as f:
+        #        return json.load(f)
         
         # Collect existing annotations
         results = self.collect_annotations(output_dir, img_path.stem)
