@@ -81,7 +81,7 @@ class AnnotatorProcessor:
                     result["result"] = parse_json_from_text(result["result"])
             
             if not result['result']:
-                logger.warning(f"No valid annotation found for {img_path.name}")
+                logger.warning(f"No valid annotation found for {img_path.name} while using {getattr(self.annotator, "model", "default")}")
                 return None
             
             # Save result

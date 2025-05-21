@@ -115,9 +115,10 @@ openai:
 
       Required Fields:
       1. Document Number
-         - Format: Any alphanumeric identifier
+         - Format: Any alphanumeric identifier EXACTLY as shown in the document
          - Example: "CONTRACT-2024-001" or "FT20240101"
-         - Note: As much as possible keep the original number
+         - Note: Do not modify or normalize the number
+         - Use "N/A" if no clear document number is found or if it's partially illegible
       
       2. Contract Date
          - Format: yyyy-mm-dd
@@ -137,38 +138,57 @@ openai:
          - Format: Number with 2 decimal places + three-letter currency code
          - Example: "123,44.50 USD" or "987,446.54 EUR"
 
-      Rules:
-      - Use "N/A" for any field where information is not found or unclear
-      - For country codes, infer from address or contact details if not explicitly stated
-      - Currency codes must follow ISO 4217 standard
-
+      Important Rules for Missing or Unclear Information:
+      1. Missing Values:
+         - ALWAYS use exactly "N/A" (not "NA", "n/a", "null", or empty string)
+         - Do not try to guess or infer values if you are not highly confident
+         - Example: If no document number is found, use "N/A"
+      
+      2. Partial Information:
+         - If only part of the information is available, use "N/A" rather than incomplete data
+         - Example: If date is "2024-xx-xx", use "N/A" instead of partial date
+      
+      3. Unclear or Ambiguous Values:
+         - When multiple possible values exist, use "N/A" rather than guessing
+         - When text is illegible or unclear, use "N/A"
+      
+      4. Confidence Scores:
+         - Use 0.99 for clear, directly stated values
+         - Use 0.85-0.95 for inferred values (e.g., country codes from addresses)
+         - Use 0.50 when returning "N/A" due to missing/unclear information
+      
+      5. Additional Guidelines:
+         - For country codes: only use ISO 3166-1 alpha-3, otherwise use "N/A"
+         - For currency codes: only use ISO 4217, otherwise use "N/A"
+         - For dates: only use yyyy-mm-dd format, otherwise use "N/A"
+      
       Return the results in this exact JSON format:
       {
         "fields": [
           {
             "field_name": "document_number",
-            "value": "extracted value",
-            "confidence": 0.95
+            "value": "CONTRACT-2024-001",
+            "confidence": 0.99
           },
           {
-            "field_name": "contract_date",
-            "value": "yyyy-mm-dd",
-            "confidence": 0.95
+            "field_name": "contract_date", 
+            "value": "N/A",
+            "confidence": 0.50
           },
           {
             "field_name": "buyer_name",
-            "value": "company name",
-            "confidence": 0.95
+            "value": "ABC Trading Company Ltd.",
+            "confidence": 0.99
           },
           {
             "field_name": "buyer_country",
-            "value": "XXX",
-            "confidence": 0.95
+            "value": "USA",
+            "confidence": 0.85
           },
           {
             "field_name": "transaction_amount",
-            "value": "123,22.00 XXX",
-            "confidence": 0.95
+            "value": "123,456.00 USD",
+            "confidence": 0.99
           }
         ],
         "metadata": {

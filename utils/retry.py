@@ -22,8 +22,9 @@
 from functools import wraps
 import time
 import logging
+from utils.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 def retry_with_backoff(
     max_retries: int = 3,
