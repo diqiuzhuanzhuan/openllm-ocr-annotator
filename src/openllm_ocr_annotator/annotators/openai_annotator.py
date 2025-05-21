@@ -85,7 +85,7 @@ class OpenAIAnnotator(BaseAnnotator):
             )
             
             # Encode image
-            image_b64 = self._encode_image(image_path)
+            image_b64 = self._encode_image(image_path, maximum_size=20*1024*1024)
             # Create API request
             response = self.client.chat.completions.create(
                 model=self.model,
