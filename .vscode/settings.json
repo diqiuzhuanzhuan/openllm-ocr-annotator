@@ -1,5 +1,8 @@
 {
   "files.exclude": {
-    "src/openllm_ocr_annotator.egg-info": true
+    "src/openllm_ocr_annotator.egg-info": true,
+    "**/__pycache__": true,
+    ".venv": true,
+    "build": true,
   }
 }

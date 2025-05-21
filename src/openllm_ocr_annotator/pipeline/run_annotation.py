@@ -27,16 +27,17 @@ from typing import List
 from src.openllm_ocr_annotator.voters.majority import MajorityVoter
 from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
 from src.openllm_ocr_annotator.voters.manager import VotingManager
-from openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
+from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
 from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
 from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
 from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
-from utils.formatter import save_as_jsonl, save_as_tsv
+from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
 from utils.file_utils import get_image_files
-from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
+from utils.dataset_converter import convert_to_hf_dataset
+from utils.logger import setup_logger
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
 def run_batch_annotation(
@@ -46,7 +47,10 @@ def run_batch_annotation(
     task_id: str,  # 添加任务标识符
     voting_strategy: str = "majority",
     voting_weights: Optional[Dict[str, float]] = None,
-    format: str | List[str] = "jsonl",
+    format: str | List[str] = "json",
+    max_files: Optional[int] = -1,
+    create_dataset: bool = True,
+    dataset_split_ratio: Optional[Dict[str, float]] = None,
     **kwargs
 ) -> None:
     """Run batch annotation with parallel processing.
@@ -66,16 +70,6 @@ def run_batch_annotation(
         format: Output format(s)
     """
     try:
-        # Initialize annotators
-        annotators = []
-        for config in annotator_configs:
-            if config["type"] == "openai":
-                annotators.append(OpenAIAnnotator(config["api_key"], model=config.get("model")))
-            elif config["type"] == "claude":
-                annotators.append(ClaudeAnnotator(config["api_key"], model=config.get("model")))
-            elif config["type"] == "gemini":
-                annotators.append(GeminiAnnotator(config["api_key"], model=config.get("model")))
-        
         # Create output directory with task_id
         output_path = Path(output_dir) / task_id
         output_path.mkdir(parents=True, exist_ok=True)
@@ -98,7 +92,15 @@ def run_batch_annotation(
         else:
             raise ValueError(f"Unknown voting strategy: {voting_strategy}")
             
-        voting_manager = VotingManager(annotators, voter)
+        annotator_paths = [
+            {
+                "results_dir": output_path,
+                "name": "OpenAIAnnotator",
+                "model": an_config["model"] 
+            }
+         for an_config in annotator_configs]
+            
+        voting_manager = VotingManager(annotator_paths=annotator_paths, voter=voter)
         
         # Process voting for each image
         voted_dir = output_path / "voted_results"
@@ -107,16 +109,18 @@ def run_batch_annotation(
         for img_path in tqdm(image_files, desc="Computing voting results"):
             try:
                 # Get voted result
-                result = voting_manager.get_voted_result(output_path, img_path.stem)
+                result = voting_manager.get_voted_result(img_path, output_path)
                 
                 # Add task metadata
-                result["task_metadata"] = {
+                result["metadata"] = {
                     "task_id": task_id,
                     "image_path": str(img_path),
                     "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
                 }
                 
                 # Save voted result in requested formats
+                if "json" in format:
+                    save_as_json(result, voted_dir / f"{img_path.stem}.json")
                 if "jsonl" in format:
                     save_as_jsonl(result, voted_dir / f"{img_path.stem}.jsonl")
                 if "tsv" in format:
@@ -127,6 +131,25 @@ def run_batch_annotation(
                 continue
         
         logger.info(f"Completed task {task_id} with {len(image_files)} images")
+        
+        # Convert to HuggingFace dataset if requested
+        if create_dataset:
+            try:
+                dataset_split_ratio = dataset_split_ratio or {
+                    "train": 0.8,
+                    "test": 0.1,
+                    "validation": 0.1
+                }
+                dataset_dir = output_path / "dataset"
+                logger.info("Converting results to HuggingFace dataset format...")
+                dataset = convert_to_hf_dataset(
+                    voted_dir=str(voted_dir),
+                    output_dir=str(dataset_dir),
+                    split_ratio=dataset_split_ratio
+                )
+                logger.info(f"Dataset created and saved to {dataset_dir}")
+            except Exception as e:
+                logger.error(f"Failed to create dataset: {e}")
         
     except Exception as e:
         logger.error(f"Task {task_id} failed: {str(e)}")
