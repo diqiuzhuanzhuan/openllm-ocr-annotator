@@ -23,6 +23,7 @@ from pathlib import Path
 import multiprocessing as mp
 from typing import List, Dict
 from src.openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
+from src.openllm_ocr_annotator.config import AnnotatorConfig
 from tqdm import tqdm
 
 logger = setup_logger(__name__)
@@ -30,7 +31,7 @@ logger = setup_logger(__name__)
 class ParallelProcessor:
     """Manages parallel processing of multiple annotators."""
     
-    def __init__(self, annotator_configs: List[Dict], output_dir: Path):
+    def __init__(self, annotator_configs: List[AnnotatorConfig], output_dir: Path):
         """Initialize with annotator configurations instead of instances.
         
         Args:
@@ -41,16 +42,12 @@ class ParallelProcessor:
         self.output_dir = output_dir
 
     @staticmethod
-    def create_annotator(config: Dict):
+    def create_annotator(config: AnnotatorConfig):
         """Create a new annotator instance from config."""
-        if config["type"] == "openai":
+        if config.type == "openai":
+            
             from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
-            return OpenAIAnnotator(
-                api_key=config["api_key"],
-                model=config.get("model"),
-                task=config.get("task", "vision_extraction"),
-                base_url=config.get("base_url", None)
-            )
+            return OpenAIAnnotator.from_config(config=config)
         elif config["type"] == "claude":
             from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
             return ClaudeAnnotator(
@@ -68,7 +65,7 @@ class ParallelProcessor:
         else:
             raise ValueError(f"Unknown annotator type: {config['type']}")
     
-    def run_annotator_process(self, config: Dict, image_files: List[Path]):
+    def run_annotator_process(self, config: AnnotatorConfig, image_files: List[Path]):
         """Run single annotator process with fresh annotator instance."""
         try:
             # Create new annotator instance in this process

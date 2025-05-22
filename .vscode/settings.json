@@ -4,5 +4,18 @@
     "**/__pycache__": true,
     ".venv": true,
     "build": true,
-  }
+  },
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}"
+  },
+  "terminal.integrated.env.windows" : {
+    "PYTHONPATH": "${workspaceFolder}\\src;${workspaceFolder}"
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}"
+  },
+  "python.analysis.extraPaths": [
+    "./src",
+    "."
+  ],
 }

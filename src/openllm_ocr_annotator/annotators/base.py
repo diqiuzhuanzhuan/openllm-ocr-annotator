@@ -25,6 +25,7 @@ import os
 from io import BytesIO
 from PIL import Image
 from PIL import ImageFile
+from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfig
 from utils.logger import setup_logger
 
 # allow dealing with large images
@@ -35,6 +36,13 @@ Image.MAX_IMAGE_PIXELS = 178956970  # set the same limit as the max pixels size
 logger = setup_logger(__name__)
 
 class BaseAnnotator(ABC):
+    
+    @staticmethod
+    @abstractmethod
+    def from_config(cls, config: AnnotatorConfig):
+        """Create an annotator instance from a configuration dictionary."""
+        pass 
+
     @abstractmethod
     def annotate(self, image_path: str) -> dict:
         pass

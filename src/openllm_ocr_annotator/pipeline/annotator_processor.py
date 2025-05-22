@@ -42,7 +42,8 @@ class AnnotatorProcessor:
         self.annotator = annotator
         # Create output directory structure: {annotator_type}/{model_version}/
         model_version = getattr(annotator, "model", "default")
-        self.output_dir = output_dir / annotator.__class__.__name__ / model_version
+        name = getattr(annotator, "name", "openai")
+        self.output_dir = output_dir / name / model_version
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def get_output_dir(self) -> Path:

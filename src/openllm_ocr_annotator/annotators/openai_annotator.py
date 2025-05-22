@@ -22,6 +22,7 @@ import os
 from typing import Optional, Dict
 from openai import OpenAI
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
+from src.openllm_ocr_annotator.config import AnnotatorConfig
 from utils.prompt_manager import PromptManager
 import httpx
 from utils.retry import retry_with_backoff
@@ -31,14 +32,28 @@ logger = setup_logger(__name__)
 
 class OpenAIAnnotator(BaseAnnotator):
     """OpenAI GPT-4V based image annotator."""
+
+    @classmethod
+    def from_config(cls, config: AnnotatorConfig):
+        return OpenAIAnnotator(
+            name=config.name,
+            api_key=config.api_key,
+            model=config.model,
+            task=config.task,
+            max_tokens=config.max_tokens,
+            base_url=config.base_url,
+            prompt_path=config.prompt_path,
+        )
     
     def __init__(
         self, 
         api_key: Optional[str] = None,
+        name: str = "openai_annotator",
         model: str = "gpt-4-vision-preview",
         task: str = "vision_extraction",
         max_tokens: int = 1000,
-        base_url: str | httpx.URL | None = None
+        base_url: str | httpx.URL | None = None,
+        prompt_path: str | None = None,
     ):
         """Initialize OpenAI annotator.
         
@@ -58,8 +73,9 @@ class OpenAIAnnotator(BaseAnnotator):
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.model = model
         self.task = task
+        self.name = name
         self.max_tokens = max_tokens
-        self.prompt_manager = PromptManager()
+        self.prompt_manager = PromptManager(prompt_path=prompt_path)
     
     @retry_with_backoff(max_retries=3, initial_delay=2.0)
     def annotate(

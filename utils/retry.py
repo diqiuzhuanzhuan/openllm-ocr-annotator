@@ -21,7 +21,6 @@
 
 from functools import wraps
 import time
-import logging
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)

@@ -31,6 +31,7 @@ from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotato
 from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
 from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
 from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
+from src.openllm_ocr_annotator.config import AnnotatorConfig
 from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
 from utils.file_utils import get_image_files
 from utils.dataset_converter import convert_to_hf_dataset
@@ -43,7 +44,7 @@ logger = setup_logger(__name__)
 def run_batch_annotation(
     input_dir: str,
     output_dir: str,
-    annotator_configs: List[Dict],
+    annotator_configs: List[AnnotatorConfig],
     task_id: str,  # 添加任务标识符
     voting_strategy: str = "majority",
     voting_weights: Optional[Dict[str, float]] = None,
@@ -79,9 +80,13 @@ def run_batch_annotation(
         if not image_files:
             logger.warning(f"No images found in {input_dir}")
             return
-        
+
+        # Limit number of files if max_files is specified 
+        if max_files > 0:
+            logger.info(f"Limiting to {max_files} files")
+            image_files = image_files[:max_files]
         # Run parallel annotation
-        processor = ParallelProcessor(annotators, output_path)
+        processor = ParallelProcessor(annotator_configs, output_path)
         processor.run_parallel(image_files)
         
         # After all annotations are complete, run voting
@@ -95,8 +100,8 @@ def run_batch_annotation(
         annotator_paths = [
             {
                 "results_dir": output_path,
-                "name": "OpenAIAnnotator",
-                "model": an_config["model"] 
+                "name": an_config.name,
+                "model": an_config.model 
             }
          for an_config in annotator_configs]
             
@@ -156,55 +161,27 @@ def run_batch_annotation(
         raise
 
 if __name__ == "__main__":
-    # Example usage with different model versions and weights
-    annotator_configs = [
-        # GPT-4 Vision Preview - Most accurate but expensive
-        {
-            "type": "openai",
-            "api_key": "sk-xxx",
-            "model": "gpt-4-vision-preview"
-        },
-        # GPT-3.5 Turbo Vision - Fast but less accurate
-        {
-            "type": "openai",
-            "api_key": "sk-xxx",
-            "model": "gpt-3.5-turbo-vision"
-        },
-        # Claude 3 Opus - Strong capabilities
-        {
-            "type": "claude",
-            "api_key": "sk-yyy",
-            "model": "claude-3-opus-20240229"
-        },
-        # Claude 3 Sonnet - Good balance
-        {
-            "type": "claude",
-            "api_key": "sk-yyy",
-            "model": "claude-3-sonnet-20240229"
-        },
-        # Gemini Pro Vision - Reliable baseline
-        {
-            "type": "gemini",
-            "api_key": "sk-zzz",
-            "model": "gemini-pro-vision"
-        }
-    ]
 
-    # Configure weights based on model capabilities
-    weights = {
-        "OpenAIAnnotator/gpt-4-vision-preview": 1.0,    # Highest weight for best accuracy
-        "OpenAIAnnotator/gpt-3.5-turbo-vision": 0.7,    # Lower weight due to limitations
-        "ClaudeAnnotator/claude-3-opus-20240229": 0.95, # Very high confidence
-        "ClaudeAnnotator/claude-3-sonnet-20240229": 0.8,# Good balance
-        "GeminiAnnotator/gemini-pro-vision": 0.75       # Reliable baseline
-    }
+    from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
+    config_manager = AnnotatorConfigManager.from_file("examples/config.yaml")
+    annotator_configs = config_manager.get_enabled_annotators()
+    weights = config_manager.get_annotator_weights()
 
-    # Run batch annotation with weighted voting
+    # Run batch annotation with weighted voting and create dataset
+    task_config = config_manager.get_task_config() 
     run_batch_annotation(
-        input_dir="data/images",
-        output_dir="data/outputs",
-        task_id="foreign_trade_20250519",
+        input_dir=task_config.input_dir,
+        output_dir=task_config.output_dir,
+        task_id=task_config.task_id,
         annotator_configs=annotator_configs,
         voting_strategy="weighted",
-        voting_weights=weights
+        voting_weights=weights,
+        max_files=task_config.max_files,
+        # 启用数据集创建
+        create_dataset=True,
+        # 自定义数据集划分比例
+        dataset_split_ratio={
+            "train": 0.9,
+            "test": 0.1
+        }
     )
