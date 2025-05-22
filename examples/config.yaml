@@ -1,0 +1,96 @@
+# =============================================================================
+# OCR Annotator Configuration
+# =============================================================================
+version: "1.0"
+
+task:
+  # Basic Configuration
+  # -----------------------------------------------------------------------------
+  task_id: foreign_trade_20250519
+  input_dir: "./data/images"           # Source image directory
+  output_dir: "./data/outputs"         # Output directory for annotations
+  prompt_path: "./prompt_templates.yaml"
+  max_files: 20                        # -1 for all files, or specify a number
+  
+  # Annotator Configurations
+  # -----------------------------------------------------------------------------
+  annotators:
+    # GPT-4 Vision Preview
+    - name: "gpt-4-vision-preview"     # Primary vision model
+      type: openai                     # Service provider
+      task: "vision_extraction"        # Prompt template key
+      model: "gpt-4-vision-preview"    
+      weight: 1.0                      # Highest weight in ensemble
+      output_format: json
+      max_tokens: 1000
+      temperature: null                # Default to deterministic output
+      enabled: true
+      prompt_path: "./examples/prompt_templates.yaml"
+      
+    # GPT-4.1 Vision Model
+    - name: "gpt-4.1-2025-04-14"
+      type: openai
+      task: "vision_extraction"
+      model: "gpt-4.1-2025-04-14"
+      weight: 1.0
+      output_format: json
+      max_tokens: 1000
+      temperature: null
+      enabled: true
+      prompt_path: "./examples/prompt_templates.yaml"
+
+    # ChatGPT-4 Latest
+    - name: "chatgpt-4o-latest"
+      type: openai
+      task: "vision_extraction"
+      model: "chatgpt-4o-latest"
+      base_url: "http://10.255.4.108:8080/v1"
+      weight: 0.9
+      output_format: json
+      max_tokens: 1000
+      temperature: null
+      enabled: true
+      prompt_path: "./examples/prompt_templates.yaml"
+
+    # GPT-4 2024 Model
+    - name: "gpt-4o-2024-11-20"
+      type: openai
+      task: "vision_extraction"
+      model: "gpt-4o-2024-11-20"
+      weight: 0.85
+      output_format: json
+      max_tokens: 1000
+      temperature: null
+      enabled: true
+      prompt_path: "./examples/prompt_templates.yaml"
+
+    # Local Qwen Model
+    - name: "qwen-2.5vl"
+      type: "qwen2.5"
+      task: "vision_extraction"
+      enabled: false                   # Disabled by default
+      base_url: "http://xxxxx.api/v1"
+      weight: 0.5
+      output_format: json
+      max_tokens: 1000
+      prompt_path: "./examples/prompt_templates.yaml"
+      
+  # Ensemble Configuration
+  # -----------------------------------------------------------------------------
+  ensemble:
+    method: "weighted_vote"            # Options: weighted_vote, simple_vote, highest_confidence
+    min_confidence: 0.5               # Minimum confidence threshold
+    agreement_threshold: 0.6          # Minimum annotator agreement ratio
+    output_format: json               # Ensemble output format
+
+  # Dataset Generation Settings
+  # -----------------------------------------------------------------------------
+  dataset:
+    name: "foreign_trade_20250519"    # Output dataset name
+    version: "1.0"                    
+    description: "Dataset for foreign trade document analysis."
+    format: json                      
+    output_dir: "./datasets/foreign_trade_20250519"
+    split_ratio: 0.9                  # Train/test split ratio
+    num_samples: -1                   # -1 for all samples
+
