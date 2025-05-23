@@ -44,17 +44,17 @@ python app.py
 🔧 Coming soon: Web-based UI / Demo via GitHub Actions page.
 
 🤖 Supported Models
-- [ ] OpenAI (GPT-4 / GPT-3.5)
-- [ ] Claude (Anthropic)
-- [ ] Gemini (Google)
+- [x] OpenAI (GPT-4 / GPT-3.5)
+- [ ] Claude (Anthropic, Comming soon)
+- [x] Gemini (Google)
 - [ ] Qwen (Alibaba)
 - [ ] Mistral (Coming soon)
 - [ ] Grok (xAI / Elon Musk)
 
 📂 Output Formats
-- [ ] JSON
+- [x] JSON
 - [ ] YAML
-- [ ] TSV
+- [ ] TSV (Comming soon)
 - [ ] Plain text
 - [ ] XML (Coming soon)
 - [ ] CSV (Coming soon)
