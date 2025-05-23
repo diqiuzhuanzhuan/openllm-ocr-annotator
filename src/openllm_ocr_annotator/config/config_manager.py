@@ -242,6 +242,14 @@ class AnnotatorConfigManager:
         """
         return self.task
 
+    def get_dataset_config(self) -> DatasetConfig:
+        """Get the dataset configuration.
+        
+        Returns:
+            DatasetConfig instance
+        """
+        return self.task.dataset
+
 if __name__ == "__main__":
     # Example usage
     logger.setLevel("INFO")

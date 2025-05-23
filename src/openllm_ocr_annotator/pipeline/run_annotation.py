@@ -140,14 +140,20 @@ def run_batch_annotation(
         # Convert to HuggingFace dataset if requested
         if create_dataset:
             try:
-                dataset_split_ratio = dataset_split_ratio or {
-                    "train": 0.8,
-                    "test": 0.1,
-                    "validation": 0.1
-                }
+                if isinstance(dataset_split_ratio, float):
+                    dataset_split_ratio = {
+                        "train": dataset_split_ratio,
+                        "test": 1 - dataset_split_ratio
+                    }
+                else:
+                    dataset_split_ratio = dataset_split_ratio or {
+                        "train": 0.8,
+                        "test": 0.1,
+                        "validation": 0.1
+                    }
                 dataset_dir = output_path / "dataset"
                 logger.info("Converting results to HuggingFace dataset format...")
-                dataset = convert_to_hf_dataset(
+                convert_to_hf_dataset(
                     voted_dir=str(voted_dir),
                     output_dir=str(dataset_dir),
                     split_ratio=dataset_split_ratio
@@ -166,6 +172,7 @@ if __name__ == "__main__":
     config_manager = AnnotatorConfigManager.from_file("examples/config.yaml")
     annotator_configs = config_manager.get_enabled_annotators()
     weights = config_manager.get_annotator_weights()
+    dataset_config = config_manager.get_dataset_config()
 
     # Run batch annotation with weighted voting and create dataset
     task_config = config_manager.get_task_config() 
@@ -177,11 +184,6 @@ if __name__ == "__main__":
         voting_strategy="weighted",
         voting_weights=weights,
         max_files=task_config.max_files,
-        # 启用数据集创建
         create_dataset=True,
-        # 自定义数据集划分比例
-        dataset_split_ratio={
-            "train": 0.9,
-            "test": 0.1
-        }
+        dataset_split_ratio=dataset_config.split_ratio,
     )
