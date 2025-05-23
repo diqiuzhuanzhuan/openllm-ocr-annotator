@@ -83,6 +83,7 @@ class AnnotatorProcessor:
             
             if not result['result']:
                 logger.warning(f"No valid annotation found for {img_path.name} while using {getattr(self.annotator, "model", "default")}")
+                logger.warning(f"Result: {result}")
                 return None
             
             # Save result

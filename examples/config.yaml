@@ -16,7 +16,7 @@ task:
   annotators:
     # GPT-4 Vision Preview
     - name: "gpt-4-vision-preview"     # Primary vision model
-      type: openai                     # Service provider
+      type: openai                     # Api format: openai like if set "openai"
       task: "vision_extraction"        # Prompt template key
       model: "gpt-4-vision-preview"    
       weight: 1.0                      # Highest weight in ensemble
@@ -43,7 +43,6 @@ task:
       type: openai
       task: "vision_extraction"
       model: "chatgpt-4o-latest"
-      base_url: "http://10.255.4.108:8080/v1"
       weight: 0.9
       output_format: json
       max_tokens: 1000
@@ -53,10 +52,23 @@ task:
 
     # GPT-4 2024 Model
     - name: "gpt-4o-2024-11-20"
-      type: openai
+      type: openai  
       task: "vision_extraction"
       model: "gpt-4o-2024-11-20"
       weight: 0.85
+      output_format: json
+      max_tokens: 1000
+      temperature: null
+      enabled: true
+      prompt_path: "./examples/prompt_templates.yaml"
+
+
+    # Gemini 2.0 Flash
+    - name: "gemini-2.0-flash"
+      type: openai  
+      task: "vision_extraction"
+      model: "gemini-2.0-flash""
+      weight: 1.0
       output_format: json
       max_tokens: 1000
       temperature: null

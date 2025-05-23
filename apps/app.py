@@ -34,7 +34,8 @@ argparser.add_argument(
 if __name__ == "__main__":
     args = argparser.parse_args()
     from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
-    config_manager = AnnotatorConfigManager.from_file("examples/config.yaml")
+    config_manager = AnnotatorConfigManager.from_file(args.config)
+    
     annotator_configs = config_manager.get_enabled_annotators()
     weights = config_manager.get_annotator_weights()
     task_config = config_manager.get_task_config() 

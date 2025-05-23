@@ -26,36 +26,60 @@ from google import genai
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
 from utils.prompt_manager import PromptManager
 from google.genai import types
+import httpx
+from utils.logger import setup_logger
+from src.openllm_ocr_annotator.config import AnnotatorConfig
 
+logger = setup_logger(__name__)
 
 class GeminiAnnotator(BaseAnnotator):
     """Google Gemini based image annotator."""
 
+    @classmethod
+    def from_config(cls, config: AnnotatorConfig):
+        """Create annotator instance from config."""
+        return GeminiAnnotator(
+            name=config.name,
+            api_key=config.api_key, 
+            model=config.model,
+            task=config.task,
+            max_tokens=config.max_tokens,
+            base_url=config.base_url,
+            prompt_path=config.prompt_path,
+        )        
+
     def __init__(
-        self,
+        self, 
         api_key: Optional[str] = None,
-        model: str = "gemini-pro-vision",
+        name: str = "gemini_annotator",
+        model: str = "gemini-2.5-pro-preview-05-06",
         task: str = "vision_extraction",
         max_tokens: int = 1000,
+        base_url: str | httpx.URL | None = None,
+        prompt_path: str | None = None,
     ):
-        """Initialize Gemini annotator.
+        """Initialize OpenAI annotator.
         
         Args:
-            api_key: Google API key. If None, uses GOOGLE_API_KEY env var
-            model: Model to use for vision tasks (e.g. gemini-pro-vision)
+            api_key: OpenAI API key. If None, uses OPENAI_API_KEY env var
+            model: Model to use for vision tasks
             task: Annotation task type ('ocr', 'layout', 'vision_extraction')
             max_tokens: Maximum tokens for response
         """
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
         if not self.api_key:
-            raise ValueError(
-                "Google API key must be provided or set in GOOGLE_API_KEY environment variable")
-
-        self.model = genai.Client(api_key=self.api_key)
-        self.model_name = model
+            raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
+        
+        self.base_url = base_url
+        if self.base_url:
+            logger.warning(f"Warning: Using custom OpenAI API endpoint: {self.base_url}")
+        self.client = genai.Client(api_key=self.api_key, 
+                                   http_options=types.HttpOptions(base_url=self.base_url))
+        self.model = model
         self.task = task
+        self.name = name
         self.max_tokens = max_tokens
-        self.prompt_manager = PromptManager()
+        self.prompt_manager = PromptManager(prompt_path=prompt_path)
 
     def annotate(
         self,
@@ -86,9 +110,8 @@ class GeminiAnnotator(BaseAnnotator):
             image = Image.open(image_path)
 
             # Create API request
-            response = self.model.models.generate_content(
-
-                model=self.model_name,
+            response = self.client.models.generate_content(
+                model=self.model,
                 contents=[
                     types.Content(
                         role='system',
@@ -96,8 +119,9 @@ class GeminiAnnotator(BaseAnnotator):
                     ),
                     types.Content(
                         role='user',
-                        parts=[types.Part.from_text(text=prompts["user"]), types.Part.from_image(image=image)]
+                        parts=[types.Part.from_text(text=prompts["user"])],
                     ),
+                    image,
                 ],
                 config={
                     "max_output_tokens": self.max_tokens,
@@ -109,7 +133,7 @@ class GeminiAnnotator(BaseAnnotator):
 
             return {
                 "result": response.text,
-                "model": self.model_name,
+                "model": self.model,
                 "task": self.task,
                 # Gemini doesn't provide timestamp
                 "timestamp": int(time.time()),
@@ -127,14 +151,3 @@ class GeminiAnnotator(BaseAnnotator):
             raise Exception(f"Error during Gemini annotation: {str(e)}")
 
 
-if __name__ == "__main__":
-    # Test with Gemini Pro Vision
-    annotator = GeminiAnnotator(
-        api_key='your-api-key',  # Replace with your API key
-        model="gemini-pro-vision",
-        task="vision_extraction",
-        max_tokens=1000
-    )
-    result = annotator.annotate("test_image.jpg")
-    print(f"\nResults from gemini-pro-vision:")
-    print(result)

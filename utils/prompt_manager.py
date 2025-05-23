@@ -26,6 +26,9 @@ from pathlib import Path
 import yaml
 from typing import Dict, Optional
 import re
+from utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class PromptManager:
     """Manager for handling prompt templates with variable substitution."""
@@ -75,8 +78,12 @@ class PromptManager:
         # Get base template
         if model in self.config and task in self.config[model]:
             template = self.config[model][task]
-        elif task in self.config['default']:
+        elif "default" in self.config and task in self.config['default']:
             template = self.config['default'][task]
+            logger.warning(f"Using default prompt template for task {task} as no specific model template found.")
+        elif "openai" in self.config and task in self.config['openai']:
+            template = self.config['openai'][task]
+            logger.warning(f"Using openai prompt template for task {task} as no specific model template found.")
         else:
             raise ValueError(f"No template found for model={model}, task={task}")
         

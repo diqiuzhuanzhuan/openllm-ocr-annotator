@@ -48,20 +48,16 @@ class ParallelProcessor:
             
             from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
             return OpenAIAnnotator.from_config(config=config)
-        elif config["type"] == "claude":
+        elif config.type == "claude":
             from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
             return ClaudeAnnotator(
                 api_key=config["api_key"],
                 model=config.get("model"),
                 base_url=config.get("base_url", None)
             )
-        elif config["type"] == "gemini":
+        elif config.type == "gemini":
             from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
-            return GeminiAnnotator(
-                api_key=config["api_key"],
-                model=config.get("model"),
-                base_url=config.get("base_url", None)
-            )
+            return GeminiAnnotator.from_config(config=config)
         else:
             raise ValueError(f"Unknown annotator type: {config['type']}")
     
