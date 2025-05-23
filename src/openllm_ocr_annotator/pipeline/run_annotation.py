@@ -20,6 +20,7 @@
 
 import time
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict
 from tqdm import tqdm
@@ -27,15 +28,14 @@ from typing import List
 from src.openllm_ocr_annotator.voters.majority import MajorityVoter
 from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
 from src.openllm_ocr_annotator.voters.manager import VotingManager
-from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
-from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
-from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
 from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
 from src.openllm_ocr_annotator.config import AnnotatorConfig
+from src.openllm_ocr_annotator.config import EnsembleStrategy
 from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
 from utils.file_utils import get_image_files
 from utils.dataset_converter import convert_to_hf_dataset
 from utils.logger import setup_logger
+
 
 logging.basicConfig(level=logging.INFO)
 logger = setup_logger(__name__)
@@ -46,7 +46,7 @@ def run_batch_annotation(
     output_dir: str,
     annotator_configs: List[AnnotatorConfig],
     task_id: str,  # 添加任务标识符
-    voting_strategy: str = "majority",
+    ensemble_strategy: str | EnsembleStrategy = EnsembleStrategy.WEIGHTED_VOTE,
     voting_weights: Optional[Dict[str, float]] = None,
     format: str | List[str] = "json",
     max_files: Optional[int] = -1,
@@ -61,7 +61,7 @@ def run_batch_annotation(
         output_dir: Directory for output files
         annotator_configs: List of annotator configurations
         task_id: Unique identifier for the annotation task
-        voting_strategy: Strategy for voting ("majority" or "weighted")
+        voting_strategy: Strategy for voting (VotingStrategy.MAJORITY or VotingStrategy.WEIGHTED)
         voting_weights: Optional weights for weighted voting strategy.
                       Example: {
                           "OpenAIAnnotator/gpt-4-vision-preview": 1.0,
@@ -71,6 +71,10 @@ def run_batch_annotation(
         format: Output format(s)
     """
     try:
+        # Convert string to enum if needed
+        if isinstance(ensemble_strategy, str):
+            voting_strategy = EnsembleStrategy.from_str(ensemble_strategy)
+            
         # Create output directory with task_id
         output_path = Path(output_dir) / task_id
         output_path.mkdir(parents=True, exist_ok=True)
@@ -90,12 +94,16 @@ def run_batch_annotation(
         processor.run_parallel(image_files)
         
         # After all annotations are complete, run voting
-        if voting_strategy == "majority":
+        if voting_strategy == EnsembleStrategy.SIMPLE_VOTE:
             voter = MajorityVoter()
-        elif voting_strategy == "weighted":
+        elif voting_strategy == EnsembleStrategy.WEIGHTED_VOTE:
             voter = WeightedVoter(weights=voting_weights)
+        elif voting_strategy == EnsembleStrategy.HIGHEST_CONFIDENCE:
+            # TODO: implement HighestConfidenceVoter
+            # voter = HighestConfidenceVoter()
+            raise NotImplementedError("HighestConfidenceVoter is not implemented yet.")
         else:
-            raise ValueError(f"Unknown voting strategy: {voting_strategy}")
+            raise ValueError(f"Invalid voting strategy: {voting_strategy}")
             
         annotator_paths = [
             {
@@ -173,6 +181,7 @@ if __name__ == "__main__":
     annotator_configs = config_manager.get_enabled_annotators()
     weights = config_manager.get_annotator_weights()
     dataset_config = config_manager.get_dataset_config()
+    ensemble_config = config_manager.get_ensemble_config()
 
     # Run batch annotation with weighted voting and create dataset
     task_config = config_manager.get_task_config() 
@@ -181,7 +190,7 @@ if __name__ == "__main__":
         output_dir=task_config.output_dir,
         task_id=task_config.task_id,
         annotator_configs=annotator_configs,
-        voting_strategy="weighted",
+        ensemble_strategy=ensemble_config.method,
         voting_weights=weights,
         max_files=task_config.max_files,
         create_dataset=True,

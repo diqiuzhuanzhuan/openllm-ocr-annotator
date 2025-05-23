@@ -9,7 +9,6 @@ task:
   task_id: foreign_trade_20250519
   input_dir: "./data/images"           # Source image directory
   output_dir: "./data/outputs"         # Output directory for annotations
-  prompt_path: "./prompt_templates.yaml"
   max_files: 20                        # -1 for all files, or specify a number
   
   # Annotator Configurations

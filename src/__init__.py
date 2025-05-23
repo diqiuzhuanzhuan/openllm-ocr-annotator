@@ -17,3 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from .openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
+from .openllm_ocr_annotator.pipeline import run_batch_annotation

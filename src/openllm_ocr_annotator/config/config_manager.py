@@ -23,8 +23,23 @@ from typing import Dict, List, Optional, Set
 import yaml
 from pathlib import Path
 from utils.logger import setup_logger
+from enum import Enum
 
 logger = setup_logger(__name__)
+
+class EnsembleStrategy(Enum):
+    # Options: weighted_vote, simple_vote, highest_confidence
+    WEIGHTED_VOTE: str = "weighted_vote"# Options: weighted_vote, simple_vote, highest_confidence
+    SIMPLE_VOTE: str = "simple_vote"  # Options: simple_vote, highest_confidence
+    HIGHEST_CONFIDENCE: str = "highest_confidence"  # Options: highest_confidence, simple_vote, weighted_vote
+
+    @classmethod
+    def from_str(cls, value: str) -> "EnsembleStrategy":
+        try:
+            return cls(value)
+        except ValueError:
+            raise ValueError(f"Unknown voting strategy: {value}. Must be one of {[s.value for s in cls]}")
+
 
 @dataclass
 class AnnotatorConfig:
@@ -51,7 +66,7 @@ class AnnotatorConfig:
 @dataclass
 class EnsembleConfig:
     """Configuration for ensemble voting"""
-    method: str
+    method: EnsembleStrategy
     min_confidence: float
     agreement_threshold: float
     output_format: str = "json"
@@ -241,6 +256,14 @@ class AnnotatorConfigManager:
             TaskConfig instance
         """
         return self.task
+
+    def get_ensemble_config(self) -> EnsembleConfig:
+        """Get the ensemble configuration.
+        
+        Returns:
+            EnsembleConfig instance
+        """
+        return self.task.ensemble
 
     def get_dataset_config(self) -> DatasetConfig:
         """Get the dataset configuration.
