@@ -7,6 +7,8 @@
 - 🔌 **Supports Multiple LLM APIs**: Compatible with OpenAI, Claude, Gemini, Qwen, Mistral, Grok, etc.
 - 🖼️ **Multimodal Input**: Process image + text pairs for richer context-aware annotation.
 - 📤 **Flexible Output**: Export annotations in multiple formats (JSON, YAML, plain text, etc.).
+- 🤗 **Create huggingface format dataset**: Only a few lines of configuration in config.yaml.
+- 📊 **Evaluate**: Output field-level accuracy and document-level accuracy.
 - ⚙️ **Lightweight**: Built in Python with minimal dependencies.
 - 🌍 **Open Source**: Contributions welcome!
 
@@ -40,6 +42,24 @@ You can run the annotator using:
 ```bash
 python app.py
 ```
+
+### Usage Examples
+#### Basic Usage
+Create a 'config.yaml' file in the 'examples' directory: 
+```yaml
+name: my_annotator
+model: gpt-4-vision-preview  # or gemini-pro-vision
+api_key: your_api_key_here
+task: vision_extraction
+max_tokens: 1000 
+#...
+```
+**Actually, refering to config.yaml provided in the 'examples' directory is the best choice.**
+#### basic useage
+```python
+python apps/app.py --config examples/config.yaml
+```
+
 
 🔧 Coming soon: Web-based UI / Demo via GitHub Actions page.
 
