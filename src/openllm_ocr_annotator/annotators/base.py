@@ -37,6 +37,53 @@ logger = setup_logger(__name__)
 
 class BaseAnnotator(ABC):
     
+    def _handle_large_image(self, image_path: str, max_pixels: int = 178956970) -> Image:
+        """Safely open and handle potentially large images.
+        
+        Args:
+            image_path: Path to the image file
+            max_pixels: Maximum allowed total pixels (default: 178956970)
+            
+        Returns:
+            PIL.Image: Loaded and potentially resized image
+        """
+        try:
+            img = Image.open(image_path)
+            width, height = img.size
+            total_pixels = width * height
+            
+            if total_pixels > max_pixels:
+                # Calculate new dimensions while maintaining aspect ratio
+                ratio = (max_pixels / total_pixels) ** 0.5
+                new_width = int(width * ratio)
+                new_height = int(height * ratio)
+                
+                logger.warning(
+                    f"Image {image_path} exceeds pixel limit "
+                    f"({total_pixels} > {max_pixels}). "
+                    f"Resizing from {width}x{height} to {new_width}x{new_height}"
+                )
+                
+                return img.resize(
+                    (new_width, new_height), 
+                    Image.Resampling.LANCZOS
+                )
+            return img
+            
+        except Image.DecompressionBombError as e:
+            logger.warning(f"DecompressionBomb warning for {image_path}: {e}")
+            # Set a more conservative Image.MAX_IMAGE_PIXELS temporarily
+            original_max = Image.MAX_IMAGE_PIXELS
+            Image.MAX_IMAGE_PIXELS = max_pixels
+            try:
+                img = Image.open(image_path)
+                return img
+            finally:
+                # Restore original MAX_IMAGE_PIXELS
+                Image.MAX_IMAGE_PIXELS = original_max
+        except Exception as e:
+            raise ValueError(f"Error opening image {image_path}: {e}")
+    
     @staticmethod
     @abstractmethod
     def from_config(cls, config: AnnotatorConfig):
@@ -60,23 +107,18 @@ class BaseAnnotator(ABC):
         """
         # First check file size and pixels
         file_size = os.path.getsize(image_path)
+
+        # hander for large images
+        img = self._handle_large_image(image_path, max_pixels=max_pixels)
         
-        # Open image to check dimensions
-        try:
-            with Image.open(image_path) as img:
-                width, height = img.size
-                total_pixels = width * height
+        width, height = img.size
+        total_pixels = width * height
                 
-                # Check if both limits are satisfied
-                if file_size <= maximum_size and total_pixels <= max_pixels:
-                    # If within limits, encode directly
-                    with open(image_path, "rb") as f:
-                        return base64.b64encode(f.read()).decode("utf-8")
-        except Image.DecompressionBombError as e:
-            logger.warning(f"DecompressionBomb warning for {image_path}: {e}")
-            # Continue to resize the image
-        except Exception as e:
-            raise ValueError(f"Error opening image {image_path}: {e}")
+        # Check if both limits are satisfied
+        if file_size <= maximum_size and total_pixels <= max_pixels:
+            # If within limits, encode directly
+            with open(image_path, "rb") as f:
+                return base64.b64encode(f.read()).decode("utf-8")
         
         # If image needs resizing, log the reason
         if file_size > maximum_size:
