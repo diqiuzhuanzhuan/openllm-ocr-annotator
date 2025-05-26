@@ -163,9 +163,9 @@ class FieldEvaluator(BaseEvaluator):
         report.append(f"- Average field accuracy: {results['overall_accuracy']:.2%}\n")
         
         # Field-level accuracy
-        report.append("## Field-level Accuracy")
-        report.append("| Field | Accuracy | Correct | Total |")
-        report.append("|-------|----------|---------|--------|")
+        report.append("####             Field-level Accuracy               ####")
+        report.append("|          Field          | Accuracy | Correct | Total  |")
+        report.append("|-------------------------|----------|---------|--------|")
         for field, stats in results["field_accuracy"].items():
             report.append(
                 f"| {field} | {stats['accuracy']:.2%} | {stats['correct']} | {stats['total']} |"
