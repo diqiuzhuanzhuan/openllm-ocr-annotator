@@ -31,7 +31,7 @@ logger = setup_logger(__name__)
 class ParallelProcessor:
     """Manages parallel processing of multiple annotators."""
     
-    def __init__(self, annotator_configs: List[AnnotatorConfig], output_dir: Path):
+    def __init__(self, annotator_configs: List[AnnotatorConfig], output_dir: Path, max_workers: int = 8):
         """Initialize with annotator configurations instead of instances.
         
         Args:
@@ -40,6 +40,7 @@ class ParallelProcessor:
         """
         self.annotator_configs = annotator_configs
         self.output_dir = output_dir
+        self.max_workers = max_workers
 
     @staticmethod
     def create_annotator(config: AnnotatorConfig):
@@ -67,7 +68,7 @@ class ParallelProcessor:
             # Create new annotator instance in this process
             annotator = self.create_annotator(config)
             model_version = getattr(annotator, "model", "default")
-            processor = AnnotatorProcessor(annotator, self.output_dir)
+            processor = AnnotatorProcessor(annotator, self.output_dir, max_workers=self.max_workers)
             processor.annotator_name = f"{annotator.__class__.__name__}/{model_version}"
             processor.process_images(image_files=image_files)
                 

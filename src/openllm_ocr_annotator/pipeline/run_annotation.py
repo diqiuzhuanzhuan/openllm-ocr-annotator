@@ -46,6 +46,7 @@ def run_batch_annotation(
     output_dir: str,
     annotator_configs: List[AnnotatorConfig],
     task_id: str,  # 添加任务标识符
+    max_workers: int = 8,
     ensemble_strategy: str | EnsembleStrategy = EnsembleStrategy.WEIGHTED_VOTE,
     voting_weights: Optional[Dict[str, float]] = None,
     format: str | List[str] = "json",
@@ -61,6 +62,7 @@ def run_batch_annotation(
         output_dir: Directory for output files
         annotator_configs: List of annotator configurations
         task_id: Unique identifier for the annotation task
+        max_workers: Maximum number of parallel workers for every annotator
         voting_strategy: Strategy for voting (VotingStrategy.MAJORITY or VotingStrategy.WEIGHTED)
         voting_weights: Optional weights for weighted voting strategy.
                       Example: {
@@ -90,7 +92,7 @@ def run_batch_annotation(
             logger.info(f"Limiting to {max_files} files")
             image_files = image_files[:max_files]
         # Run parallel annotation
-        processor = ParallelProcessor(annotator_configs, output_path)
+        processor = ParallelProcessor(annotator_configs, output_path, max_workers=max_workers)
         processor.run_parallel(image_files)
         
         # After all annotations are complete, run voting

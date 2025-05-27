@@ -32,12 +32,13 @@ logger = setup_logger(__name__)
 class AnnotatorProcessor:
     """Processor for running single annotator on images."""
     
-    def __init__(self, annotator: BaseAnnotator, output_dir: Path):
+    def __init__(self, annotator: BaseAnnotator, output_dir: Path, max_workers: int = 8):
         """Initialize the processor with an annotator and output directory.
         
         Args:
             annotator (BaseAnnotator): The annotator to process images with
             output_dir (Path): Base output directory for results
+            max_workers (int): Maximum number of parallel workers (default: 8)
         """
         self.annotator = annotator
         # Create output directory structure: {annotator_type}/{model_version}/
@@ -45,19 +46,31 @@ class AnnotatorProcessor:
         name = getattr(annotator, "name", "openai")
         self.output_dir = output_dir / name / model_version
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.max_workes = max_workers
 
     def get_output_dir(self) -> Path:
         """Get the output directory for the current annotator."""
         return self.output_dir
 
-    def process_images(self, image_files: List[Path]):
+    def _process_images(self, image_files: List[Path]):
         """Process a list of images with the annotator."""
         """
         Args:
             image_files (List[Path]): List of image file paths to process. 
         """
-        for img_path in tqdm(image_files, desc=f"Processing with {self.annotator.__class__.__name__}", unit="image"):
+        for img_path in tqdm(image_files, desc=f"Processing with {self.annotator.name}", unit="image"):
             self.process_single_image(str(img_path))
+
+    def process_images(self, image_files: List[Path]):
+        """Asynchronously process a list of images with the annotator."""
+        """
+        Args:
+            image_files (List[Path]): List of image file paths to process.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=self.max_workes) as executor:
+            futures = [executor.submit(self.process_single_image, str(img_path)) for img_path in image_files]
+            results = [future.result() for future in tqdm(futures, desc=f"Processing with {self.annotator.name}", unit="image")]
     
     def process_single_image(self, image_path: str) -> Dict:
         """Process single image and save result."""

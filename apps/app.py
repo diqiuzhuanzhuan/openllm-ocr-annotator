@@ -31,6 +31,13 @@ argparser.add_argument(
     help="Path to the annotator config file.",
 )
 
+argparser.add_argument(
+    "--max-workers",
+    default=8,
+    type=int,
+    help="Maximum number of parallel workers for every annotator.",
+)
+
 if __name__ == "__main__":
     args = argparser.parse_args()
     from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
@@ -55,6 +62,7 @@ if __name__ == "__main__":
         input_dir=task_config.input_dir,
         output_dir=task_config.output_dir,
         task_id=task_config.task_id,
+        max_workers=args.max_workers,
         annotator_configs=annotator_configs,
         ensemble_strategy=ensemble_config.method,
         voting_weights=weights,

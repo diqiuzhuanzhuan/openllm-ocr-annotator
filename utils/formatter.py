@@ -34,13 +34,13 @@ def parse_json_from_text(text: str) -> dict:
         try:
             return json.loads(json_match.group(1))
         except json.JSONDecodeError:
-            logger.warning("Failed to parse JSON from markdown block")
+            logger.warning(f"Failed to parse JSON from markdown block: {text}")
     
     # If no markdown block found, try to parse the entire text as JSON
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        logger.warning("Failed to parse text as JSON")
+        logger.warning(f"Failed to parse text as JSON: {text}")
         return {}
 
 def save_as_json(data, path):
