@@ -67,7 +67,7 @@ task:
     - name: "gemini-2.0-flash"
       type: openai  
       task: "vision_extraction"
-      model: "gemini-2.0-flash""
+      model: "gemini-2.0-flash"
       weight: 1.0
       output_format: json
       max_tokens: 1000
