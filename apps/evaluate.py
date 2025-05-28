@@ -22,6 +22,7 @@
 import argparse
 from pathlib import Path
 from src.openllm_ocr_annotator.evaluators.field_evaluator import FieldEvaluator
+from utils.field_matcher import NumericMatcher, DateMatcher, CurrencyMatcher
 
 def main():
     # groud_trueth_dir should be a directory containing JSON files, such as: image1.json, image2.json
@@ -71,8 +72,13 @@ def main():
     parser.add_argument("--output", help="Output file for evaluation report")
     
     args = parser.parse_args()
+
+    field_mathers = {
+        "contract_date": DateMatcher(),
+        "transaction_amount": CurrencyMatcher(),
+    }
     
-    evaluator = FieldEvaluator(args.ground_truth, args.predictions)
+    evaluator = FieldEvaluator(args.ground_truth, args.predictions, field_matchers=field_mathers)
     results = evaluator.evaluate_batch()
     
     # Generate and save report

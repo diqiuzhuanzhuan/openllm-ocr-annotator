@@ -22,13 +22,13 @@
 from typing import Dict, Optional, List, Tuple
 from .base import BaseEvaluator
 from utils.logger import setup_logger
+from utils.field_matcher import NumericMatcher, DateMatcher, ExactMatcher, FieldMatcher, CaseInsensitiveMatcher
 from collections import defaultdict
 
 
 logger = setup_logger(__name__)
 
 class FieldEvaluator(BaseEvaluator):
-    """Evaluator for field-level and document-level accuracy."""
 
     def evaluate_single(self, ground_truth: Dict, prediction: Dict) -> Dict:
         """Evaluate single document field accuracy.
@@ -60,7 +60,8 @@ class FieldEvaluator(BaseEvaluator):
         correct_count = 0
         for field_name, gt_value in gt_fields.items():
             pred_value = pred_fields.get(field_name)
-            is_correct = (gt_value == pred_value)
+            matcher = self.get_matcher(field_name)
+            is_correct = matcher.match(gt_value, pred_value) if pred_value is not None else False
             correct_count += int(is_correct)
             
             results["field_results"][field_name] = {
@@ -101,6 +102,7 @@ class FieldEvaluator(BaseEvaluator):
         for gt_file in self.ground_truth_dir.glob("*.json"):
             doc_id = gt_file.stem
             pred_file = self.prediction_dir / gt_file.name
+            total_docs += 1
             
             if not pred_file.exists():
                 logger.warning(f"No prediction found for {doc_id}")
@@ -122,7 +124,6 @@ class FieldEvaluator(BaseEvaluator):
                 # Track perfect matches (all fields correct)
                 if doc_result["exact_match"]:
                     exact_matches += 1
-                total_docs += 1
                 
             except Exception as e:
                 logger.warning(f"Error evaluating {doc_id}: {e}")
