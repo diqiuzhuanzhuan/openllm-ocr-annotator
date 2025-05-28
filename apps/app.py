@@ -64,10 +64,10 @@ if __name__ == "__main__":
         task_id=task_config.task_id,
         max_workers=args.max_workers,
         annotator_configs=annotator_configs,
-        ensemble_strategy=ensemble_config.method,
+        ensemble_config=ensemble_config,
         voting_weights=weights,
         max_files=task_config.max_files,
-        create_dataset=True,
+        create_dataset=dataset_config.enabled,
         dataset_split_ratio=dataset_config.split_ratio,
     )
     

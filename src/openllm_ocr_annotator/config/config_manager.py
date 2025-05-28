@@ -70,11 +70,18 @@ class EnsembleConfig:
     min_confidence: float
     agreement_threshold: float
     output_format: str = "json"
+    enabled: bool = True
     
     @classmethod
     def from_dict(cls, config: Dict) -> None:
         """Load configuration from a dictionary"""
-        return cls(**config)
+        return cls(
+            method=EnsembleStrategy.from_str(config.get("method", "weighted_vote")),
+            min_confidence=config.get("min_confidence", 0.0),
+            agreement_threshold=config.get("agreement_threshold", 0.0),
+            output_format=config.get("output_format", "json"),
+            enabled=config.get("enabled", True)
+        )
 
 @dataclass
 class DatasetConfig:
@@ -86,6 +93,7 @@ class DatasetConfig:
     output_dir: str = "./datasets"
     split_ratio: float = 0.9
     num_samples: int = -1  # -1 means use all available samples
+    enabled: bool = True
 
     @classmethod
     def from_dict(cls, config: Dict) -> "DatasetConfig":
@@ -97,7 +105,8 @@ class DatasetConfig:
             format=config.get("format", "json"),
             output_dir=config.get("output_dir", "./datasets"),
             split_ratio=config.get("split_ratio", 0.8),
-            num_samples=config.get("num_samples", -1)
+            num_samples=config.get("num_samples", -1),
+            enabled=config.get("enabled", True)
         )
     
 @dataclass
@@ -198,7 +207,8 @@ class AnnotatorConfigManager:
             method=task_config["ensemble"]["method"],
             min_confidence=task_config["ensemble"]["min_confidence"],
             agreement_threshold=task_config["ensemble"]["agreement_threshold"],
-            output_format=task_config["ensemble"].get("output_format", "json")
+            output_format=task_config["ensemble"].get("output_format", "json"),
+            enabled=task_config["ensemble"].get("enabled", True)
         )
 
         # Parse and validate dataset config
@@ -215,7 +225,8 @@ class AnnotatorConfigManager:
             format=dataset_config.get("format", "json"),
             output_dir=dataset_config.get("output_dir", "./datasets"),
             split_ratio=dataset_config.get("split_ratio", 0.8),
-            num_samples=dataset_config.get("num_samples", -1)
+            num_samples=dataset_config.get("num_samples", -1),
+            enabled=dataset_config.get("enabled", True)
         )
         
         return TaskConfig(

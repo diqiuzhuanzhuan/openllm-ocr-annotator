@@ -89,6 +89,7 @@ task:
   # Ensemble Configuration
   # -----------------------------------------------------------------------------
   ensemble:
+    enabled: true
     method: "weighted_vote"            # Options: weighted_vote, simple_vote, highest_confidence
     min_confidence: 0.5               # Minimum confidence threshold
     agreement_threshold: 0.6          # Minimum annotator agreement ratio
@@ -97,6 +98,7 @@ task:
   # Dataset Generation Settings
   # -----------------------------------------------------------------------------
   dataset:
+    enabled: true                     #
     name: "foreign_trade_20250519"    # Output dataset name
     version: "1.0"                    
     description: "Dataset for foreign trade document analysis."

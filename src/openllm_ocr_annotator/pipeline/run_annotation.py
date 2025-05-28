@@ -30,7 +30,7 @@ from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
 from src.openllm_ocr_annotator.voters.manager import VotingManager
 from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
 from src.openllm_ocr_annotator.config import AnnotatorConfig
-from src.openllm_ocr_annotator.config import EnsembleStrategy
+from src.openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
 from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
 from utils.file_utils import get_image_files
 from utils.dataset_converter import convert_to_hf_dataset
@@ -47,7 +47,7 @@ def run_batch_annotation(
     annotator_configs: List[AnnotatorConfig],
     task_id: str,  # 添加任务标识符
     max_workers: int = 8,
-    ensemble_strategy: str | EnsembleStrategy = EnsembleStrategy.WEIGHTED_VOTE,
+    ensemble_config: EnsembleConfig | None = None,
     voting_weights: Optional[Dict[str, float]] = None,
     format: str | List[str] = "json",
     max_files: Optional[int] = -1,
@@ -73,10 +73,7 @@ def run_batch_annotation(
         format: Output format(s)
     """
     try:
-        # Convert string to enum if needed
-        if isinstance(ensemble_strategy, str):
-            voting_strategy = EnsembleStrategy.from_str(ensemble_strategy)
-            
+
         # Create output directory with task_id
         output_path = Path(output_dir) / task_id
         output_path.mkdir(parents=True, exist_ok=True)
@@ -94,61 +91,68 @@ def run_batch_annotation(
         # Run parallel annotation
         processor = ParallelProcessor(annotator_configs, output_path, max_workers=max_workers)
         processor.run_parallel(image_files)
-        
-        # After all annotations are complete, run voting
-        if voting_strategy == EnsembleStrategy.SIMPLE_VOTE:
-            voter = MajorityVoter()
-        elif voting_strategy == EnsembleStrategy.WEIGHTED_VOTE:
-            voter = WeightedVoter(weights=voting_weights)
-        elif voting_strategy == EnsembleStrategy.HIGHEST_CONFIDENCE:
-            # TODO: implement HighestConfidenceVoter
-            # voter = HighestConfidenceVoter()
-            raise NotImplementedError("HighestConfidenceVoter is not implemented yet.")
-        else:
-            raise ValueError(f"Invalid voting strategy: {voting_strategy}")
-            
-        annotator_paths = [
-            {
-                "results_dir": output_path,
-                "name": an_config.name,
-                "model": an_config.model 
-            }
-         for an_config in annotator_configs]
-            
-        voting_manager = VotingManager(annotator_paths=annotator_paths, voter=voter)
-        
-        # Process voting for each image
-        voted_dir = output_path / "voted_results"
-        voted_dir.mkdir(exist_ok=True)
-        
-        for img_path in tqdm(image_files, desc="Computing voting results"):
-            try:
-                # Get voted result
-                result = voting_manager.get_voted_result(img_path, output_path)
+        print(ensemble_config)
+        if ensemble_config and ensemble_config.enabled: 
+            # Convert string to enum if needed
+            ensemble_strategy = EnsembleStrategy.from_str(ensemble_config.method)
+
+            # After all annotations are complete, run voting
+            if ensemble_strategy == EnsembleStrategy.SIMPLE_VOTE:
+                voter = MajorityVoter()
+            elif ensemble_strategy == EnsembleStrategy.WEIGHTED_VOTE:
+                voter = WeightedVoter(weights=voting_weights)
+            elif ensemble_strategy == EnsembleStrategy.HIGHEST_CONFIDENCE:
+                # TODO: implement HighestConfidenceVoter
+                # voter = HighestConfidenceVoter()
+                raise NotImplementedError("HighestConfidenceVoter is not implemented yet.")
+            else:
+                raise ValueError(f"Invalid voting strategy: {ensemble_strategy}")
                 
-                # Add task metadata
-                result["metadata"] = {
-                    "task_id": task_id,
-                    "image_path": str(img_path),
-                    "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+            annotator_paths = [
+                {
+                    "results_dir": output_path,
+                    "name": an_config.name,
+                    "model": an_config.model 
                 }
+            for an_config in annotator_configs]
                 
-                # Save voted result in requested formats
-                if "json" in format:
-                    save_as_json(result, voted_dir / f"{img_path.stem}.json")
-                if "jsonl" in format:
-                    save_as_jsonl(result, voted_dir / f"{img_path.stem}.jsonl")
-                if "tsv" in format:
-                    save_as_tsv(result, voted_dir / f"{img_path.stem}.tsv")
-                
-            except Exception as e:
-                logger.error(f"Error in voting for {img_path}: {e}")
-                continue
-        
+            voting_manager = VotingManager(annotator_paths=annotator_paths, voter=voter)
+            
+            # Process voting for each image
+            voted_dir = output_path / "voted_results"
+            voted_dir.mkdir(exist_ok=True)
+            
+            for img_path in tqdm(image_files, desc="Computing voting results"):
+                try:
+                    # Get voted result
+                    result = voting_manager.get_voted_result(img_path, output_path)
+                    
+                    # Add task metadata
+                    result["metadata"] = {
+                        "task_id": task_id,
+                        "image_path": str(img_path),
+                        "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+                    }
+                    
+                    # Save voted result in requested formats
+                    if "json" in format:
+                        save_as_json(result, voted_dir / f"{img_path.stem}.json")
+                    if "jsonl" in format:
+                        save_as_jsonl(result, voted_dir / f"{img_path.stem}.jsonl")
+                    if "tsv" in format:
+                        save_as_tsv(result, voted_dir / f"{img_path.stem}.tsv")
+                    
+                except Exception as e:
+                    logger.error(f"Error in voting for {img_path}: {e}")
+                    continue
+            
         logger.info(f"Completed task {task_id} with {len(image_files)} images")
         
         # Convert to HuggingFace dataset if requested
         if create_dataset:
+            if not ensemble_config.enabled:
+                logger.warning("Dataset creation is only supported in ensemble mode.")
+                return
             try:
                 if isinstance(dataset_split_ratio, float):
                     dataset_split_ratio = {
@@ -195,6 +199,6 @@ if __name__ == "__main__":
         ensemble_strategy=ensemble_config.method,
         voting_weights=weights,
         max_files=task_config.max_files,
-        create_dataset=True,
+        create_dataset=dataset_config.enabled,
         dataset_split_ratio=dataset_config.split_ratio,
     )
