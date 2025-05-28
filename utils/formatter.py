@@ -25,20 +25,43 @@ from typing import List, Dict, Union, Iterator
 
 logger = logging.getLogger(__name__)
 
+def remove_comments(json_str: str) -> str:
+    """Remove C-style comments from JSON string.
+    
+    Args:
+        json_str: JSON string that may contain comments
+        
+    Returns:
+        Clean JSON string with comments removed
+    """
+    # Remove // comments
+    json_str = re.sub(r'//.*$', '', json_str, flags=re.MULTILINE)
+    # Remove /* */ comments
+    json_str = re.sub(r'/\*.*?\*/', '', json_str, flags=re.DOTALL)
+    return json_str
 
 def parse_json_from_text(text: str) -> dict:
-    """Extract JSON from text that may contain markdown code blocks."""
+    """Extract JSON from text that may contain markdown code blocks and comments.
+    
+    Args:
+        text: Text containing JSON, possibly with markdown and comments
+        
+    Returns:
+        Parsed JSON as dictionary
+    """
     # Try to find JSON in markdown code block
     json_match = re.search(r'```(?:json)?\n(.*?)\n```', text, re.DOTALL)
     if json_match:
         try:
-            return json.loads(json_match.group(1))
+            clean_json = remove_comments(json_match.group(1))
+            return json.loads(clean_json)
         except json.JSONDecodeError:
             logger.warning(f"Failed to parse JSON from markdown block: {text}")
     
     # If no markdown block found, try to parse the entire text as JSON
     try:
-        return json.loads(text)
+        clean_json = remove_comments(text)
+        return json.loads(clean_json)
     except json.JSONDecodeError:
         logger.warning(f"Failed to parse text as JSON: {text}")
         return {}

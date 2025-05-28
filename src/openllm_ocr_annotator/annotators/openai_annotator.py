@@ -41,6 +41,7 @@ class OpenAIAnnotator(BaseAnnotator):
             model=config.model,
             task=config.task,
             max_tokens=config.max_tokens,
+            temperature=config.temperature,
             base_url=config.base_url,
             prompt_path=config.prompt_path,
         )
@@ -52,6 +53,7 @@ class OpenAIAnnotator(BaseAnnotator):
         model: str = "gpt-4-vision-preview",
         task: str = "vision_extraction",
         max_tokens: int = 1000,
+        temperature: Optional[float] | None = None,
         base_url: str | httpx.URL | None = None,
         prompt_path: str | None = None,
     ):
@@ -75,6 +77,7 @@ class OpenAIAnnotator(BaseAnnotator):
         self.task = task
         self.name = name
         self.max_tokens = max_tokens
+        self.temperature = temperature
         self.prompt_manager = PromptManager(prompt_path=prompt_path)
     
     @retry_with_backoff(max_retries=3, initial_delay=2.0)
@@ -129,7 +132,8 @@ class OpenAIAnnotator(BaseAnnotator):
                         ]
                     }
                 ],
-                max_tokens=self.max_tokens
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
             )
             
             return {
