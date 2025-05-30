@@ -22,31 +22,77 @@
 from utils.logger import setup_logger
 from pathlib import Path
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 from tqdm import tqdm
-from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
+import time
+from src.openllm_ocr_annotator.config import AnnotatorConfig
 from utils.formatter import parse_json_from_text
 
 logger = setup_logger(__name__)
 
+def create_annotator(config: AnnotatorConfig):
+    """Create a new annotator instance from config."""
+    if config.type == "openai":
+        from src.openllm_ocr_annotator.annotators.openai_annotator import OpenAIAnnotator
+        return OpenAIAnnotator.from_config(config=config)
+    elif config.type == "claude":
+        from src.openllm_ocr_annotator.annotators.claude_annotator import ClaudeAnnotator
+        return ClaudeAnnotator(
+            api_key=config["api_key"],
+            model=config.get("model"),
+            base_url=config.get("base_url", None)
+        )
+    elif config.type == "gemini":
+        from src.openllm_ocr_annotator.annotators.gemini_annotator import GeminiAnnotator
+        return GeminiAnnotator.from_config(config=config)
+    else:
+        raise ValueError(f"Unknown annotator type: {config['type']}")
+
+
 class AnnotatorProcessor:
-    """Processor for running single annotator on images."""
-    
-    def __init__(self, annotator: BaseAnnotator, output_dir: Path, max_workers: int = 8):
+    def __init__(self, 
+                 annotator_config: AnnotatorConfig, 
+                 output_dir: Path, 
+                 max_workers: int = 8,
+                 num_samples: int = 1,
+                 sampling_temperature: float = None):
+
         """Initialize the processor with an annotator and output directory.
         
         Args:
-            annotator (BaseAnnotator): The annotator to process images with
-            output_dir (Path): Base output directory for results
-            max_workers (int): Maximum number of parallel workers (default: 8)
+            annotator: The annotator to process images with
+            output_dir: Base output directory for results
+            max_workers: Maximum number of parallel workers (default: 8)
+            num_samples: Number of samples to generate per image (default: 1)
+            sampling_temperature: Temperature for sampling (default: None)
         """
-        self.annotator = annotator
-        # Create output directory structure: {annotator_type}/{model_version}/
-        model_version = getattr(annotator, "model", "default")
-        name = getattr(annotator, "name", "openai")
-        self.output_dir = output_dir / name / model_version
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.max_workes = max_workers
+        self.annotator = create_annotator(annotator_config)
+        # Create output directory structure
+        model_version = getattr(self.annotator, "model", "default")
+        name = getattr(self.annotator, "name", "openai")
+        
+        # If using sampling, create subdirectories for each sample
+        self.num_samples = annotator_config.num_samples
+        #self.sampling_temperature = sampling_temperature
+        self.sampling_temperature = annotator_config.temperature
+        
+        if self.num_samples > 1:
+            # For sampling mode: /output_dir/model/version/sampling_{temperature}/sample_{i}/
+            sampling_dir = f"sampling_{sampling_temperature}" if sampling_temperature else "sampling"
+            self.output_dir = output_dir / name / model_version / sampling_dir
+            self.sample_dirs = [
+                self.output_dir / f"sample_{i}" 
+                for i in range(self.num_samples)
+            ]
+            for dir in self.sample_dirs:
+                dir.mkdir(parents=True, exist_ok=True)
+        else:
+            # For single result mode: /output_dir/model/version/
+            self.output_dir = output_dir / name / model_version
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            self.sample_dirs = [self.output_dir]
+            
+        self.max_workers = max_workers
 
     def get_output_dir(self) -> Path:
         """Get the output directory for the current annotator."""
@@ -68,43 +114,149 @@ class AnnotatorProcessor:
             image_files (List[Path]): List of image file paths to process.
         """
         from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=self.max_workes) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [executor.submit(self.process_single_image, str(img_path)) for img_path in image_files]
             results = [future.result() for future in tqdm(futures, desc=f"Processing with {self.annotator.name}", unit="image")]
-    
-    def process_single_image(self, image_path: str) -> Dict:
-        """Process single image and save result."""
-        img_path = Path(image_path)
-        result_path = self.output_dir / f"{img_path.stem}.json"
+
+            
+    def _parse_and_validate_result(self, result: Union[str, Dict], img_path: Path, sample_id: Optional[int] = None) -> Optional[Dict]:
+        """Parse and validate annotation result.
         
-        # Skip if already processed
-        if result_path.exists():
-            #logger.info(f"Loading cached result for {img_path.name}")
-            with open(result_path, 'r') as f:
-                return json.load(f)
+        Args:
+            result: Raw annotation result
+            img_path: Path to the processed image
+            sample_id: Optional sample ID for sampling mode
         
+        Returns:
+            Parsed and validated result dictionary or None if invalid
+        """
         try:
-            # Run annotation and get result
-            result = self.annotator.annotate(str(img_path))
-            # Parse result if it's a string, otherwise use as is
+            # Parse string result
             if isinstance(result, str):
-                result = parse_json_from_text(result)
+                result = {'result': parse_json_from_text(result)}
             elif isinstance(result, dict) and "result" in result:
-                # If result is a dict with "result" key, parse that if it's a string
-                if isinstance(result["result"], str):
-                    result["result"] = parse_json_from_text(result["result"])
+            # Parse nested result
+                if isinstance(result["result"], list):
+                    result["result"] = parse_json_from_text(result["result"][0])
             
-            if not result['result']:
-                logger.warning(f"No valid annotation found for {img_path.name} while using {getattr(self.annotator, "model", "default")}")
-                logger.warning(f"Result: {result}")
+            # Validate result
+            if not result.get('result'):
+                sample_info = f" (sample {sample_id})" if sample_id is not None else ""
+                logger.warning(f"No valid annotation found for {img_path.name}{sample_info}")
                 return None
-            
-            # Save result
-            with open(result_path, 'w') as f:
-                json.dump(result, f, indent=2, ensure_ascii=False)
+                
+            # Add metadata
+            result["metadata"] = {
+                "timestamp": int(time.time()),
+                **({"sample_id": sample_id, "temperature": self.sampling_temperature} if sample_id is not None else {})
+            }
             
             return result
             
         except Exception as e:
+            sample_info = f" (sample {sample_id})" if sample_id is not None else ""
+            logger.error(f"Error parsing result for {img_path}{sample_info}: {e}")
+            return None
+
+    def _save_result(self, result: Dict, save_path: Path) -> None:
+        """Save result to JSON file.
+        
+        Args:
+            result: Result dictionary to save
+            save_path: Path where to save the result
+        """
+        try:
+            with open(save_path, 'w') as f:
+                json.dump(result, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Error saving result to {save_path}: {e}")
+
+    def process_single_image(self, image_path: str) -> Optional[Union[Dict, List[Dict]]]:
+        """Process single image and save result(s).
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            In single mode: Processed result dictionary or None if failed
+            In sampling mode: List of result dictionaries or None if failed
+        """
+        img_path = Path(image_path)
+        
+        if self.num_samples > 1:
+            return self._process_sampling_mode(img_path)
+        else:
+            return self._process_single_mode(img_path)
+            
+    def _process_single_mode(self, img_path: Path) -> Optional[Dict]:
+        """Process image in single result mode."""
+        result_path = self.output_dir / f"{img_path.stem}.json"
+        
+        # Return cached result if exists
+        if result_path.exists():
+            try:
+                with open(result_path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Error loading cached result for {img_path}: {e}")
+        
+        try:
+            # Get annotation
+            result = self.annotator.annotate(str(img_path))
+            
+            # Parse and validate
+            processed_result = self._parse_and_validate_result(result, img_path)
+            if not processed_result:
+                return None
+                
+            # Save result
+            self._save_result(processed_result, result_path)
+            return processed_result
+            
+        except Exception as e:
             logger.error(f"Error processing {img_path}: {e}")
             return None
+
+    def _process_sampling_mode(self, img_path: Path) -> Optional[List[Dict]]:
+        """Process image in sampling mode."""
+        results = []
+        
+        # Check for existing samples
+        for i, sample_dir in enumerate(self.sample_dirs):
+            result_path = sample_dir / f"{img_path.stem}.json"
+            if result_path.exists():
+                try:
+                    with open(result_path, 'r') as f:
+                        results.append(json.load(f))
+                except Exception as e:
+                    logger.error(f"Error loading cached sample {i} for {img_path}: {e}")
+                    
+        # Return if all samples exist
+        if len(results) == self.num_samples:
+            return results
+            
+        # Clear partial results to process all samples
+        results = []
+        
+        try:
+            # Get samples
+            raw_results = self.annotator.annotate(str(img_path))
+            meta_info = {k: raw_results[k] for k in raw_results if k != "result"} 
+            
+            # Process each sample
+            for i, raw_result in enumerate(raw_results.get("result", [])):
+
+                processed_result = self._parse_and_validate_result(raw_result, img_path, i)
+                if processed_result:
+                    # Save sample
+                    processed_result.update(meta_info)
+                    save_path = self.sample_dirs[i] / f"{img_path.stem}.json"
+                    self._save_result(processed_result, save_path)
+                    results.append(processed_result)
+                    
+            return results if results else None
+            
+        except Exception as e:
+            logger.error(f"Error processing samples for {img_path}: {e}")
+            return None
+

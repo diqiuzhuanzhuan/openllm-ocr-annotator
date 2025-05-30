@@ -91,7 +91,6 @@ def run_batch_annotation(
         # Run parallel annotation
         processor = ParallelProcessor(annotator_configs, output_path, max_workers=max_workers)
         processor.run_parallel(image_files)
-        print(ensemble_config)
         if ensemble_config and ensemble_config.enabled: 
             # Convert string to enum if needed
             ensemble_strategy = EnsembleStrategy.from_str(ensemble_config.method)

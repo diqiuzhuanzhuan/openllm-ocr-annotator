@@ -56,11 +56,26 @@ class AnnotatorConfig:
     temperature: Optional[float] = None
     enabled: bool = True
     prompt_path: Optional[str] = None
+    num_samples: Optional[str] = 1
 
     @classmethod
     def from_dict(cls, config: Dict) -> "AnnotatorConfig":
         """Load configuration from a dictionary"""
-        return cls(**config)
+        return cls(
+            name=config.get("name", "default_annotator"),
+            type=config.get("type", "openai"),
+            task=config.get("task", "ocr"),
+            api_key=config.get("api_key", None),
+            model=config.get("model", None),
+            base_url=config.get("base_url", None),
+            weight=config.get("weight", 1.0),
+            output_format=config.get("output_format", "json"),
+            max_tokens=config.get("max_tokens", None),
+            temperature=config.get("temperature", None),
+            enabled=config.get("enabled", True),
+            prompt_path=config.get("prompt_path", None),
+            num_samples=config.get("num_samples", 1)
+        )
             
 
 @dataclass

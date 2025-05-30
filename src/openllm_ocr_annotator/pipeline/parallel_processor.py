@@ -68,8 +68,7 @@ class ParallelProcessor:
             # Create new annotator instance in this process
             annotator = self.create_annotator(config)
             model_version = getattr(annotator, "model", "default")
-            processor = AnnotatorProcessor(annotator, self.output_dir, max_workers=self.max_workers)
-            processor.annotator_name = f"{annotator.__class__.__name__}/{model_version}"
+            processor = AnnotatorProcessor(config, self.output_dir, max_workers=self.max_workers)
             processor.process_images(image_files=image_files)
                 
         except Exception as e:
