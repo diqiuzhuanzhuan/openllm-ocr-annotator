@@ -78,7 +78,7 @@ class AnnotatorProcessor:
         if self.num_samples > 1:
             # For sampling mode: /output_dir/model/version/sampling_{temperature}/sample_{i}/
             sampling_dir = f"sampling_{self.sampling_temperature}" if self.sampling_temperature else "sampling"
-            self.output_dir = output_dir / name / model_version / sampling_dir
+            self.output_dir = output_dir / name.lstrip('/') / model_version.lstrip('/') / sampling_dir.lstrip('/')
             self.sample_dirs = [
                 self.output_dir / f"sample_{i}" 
                 for i in range(self.num_samples)
@@ -87,7 +87,7 @@ class AnnotatorProcessor:
                 dir.mkdir(parents=True, exist_ok=True)
         else:
             # For single result mode: /output_dir/model/version/
-            self.output_dir = output_dir / name / model_version
+            self.output_dir = output_dir / name.lstrip('/') / model_version.lstrip('/')
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self.sample_dirs = [self.output_dir]
             
