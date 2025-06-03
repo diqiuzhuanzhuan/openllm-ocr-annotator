@@ -40,7 +40,7 @@ uv pip install .
 
 You can run the annotator using:
 ```bash
-python app.py
+python apps/app.py
 ```
 
 ### Usage Examples

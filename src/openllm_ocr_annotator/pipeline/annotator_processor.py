@@ -53,9 +53,8 @@ class AnnotatorProcessor:
     def __init__(self, 
                  annotator_config: AnnotatorConfig, 
                  output_dir: Path, 
-                 max_workers: int = 8,
-                 num_samples: int = 1,
-                 sampling_temperature: float = None):
+                 max_workers: int = 8
+                 ):
 
         """Initialize the processor with an annotator and output directory.
         
@@ -78,7 +77,7 @@ class AnnotatorProcessor:
         
         if self.num_samples > 1:
             # For sampling mode: /output_dir/model/version/sampling_{temperature}/sample_{i}/
-            sampling_dir = f"sampling_{sampling_temperature}" if sampling_temperature else "sampling"
+            sampling_dir = f"sampling_{self.sampling_temperature}" if self.sampling_temperature else "sampling"
             self.output_dir = output_dir / name / model_version / sampling_dir
             self.sample_dirs = [
                 self.output_dir / f"sample_{i}" 
