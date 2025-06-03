@@ -51,8 +51,14 @@ name: my_annotator
 model: gpt-4-vision-preview  # or gemini-pro-vision
 api_key: your_api_key_here
 task: vision_extraction
+type: openai
+base_url: 'http://127.0.0.1:8879/v1'
+enabled: true                # Disabled by default
 max_tokens: 1000 
-#...
+weight: 1
+output_format: json
+temperature: null
+prompt_path: "./examples/prompt_templates.yaml"
 ```
 **Actually, refering to config.yaml provided in the 'examples' directory is the best choice.**
 #### basic useage
