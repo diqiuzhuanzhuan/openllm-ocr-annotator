@@ -70,6 +70,10 @@ def run_batch_annotation(
                           "ClaudeAnnotator/claude-3-opus": 0.9
                       }
         format: Output format(s)
+        max_files: the maximum number of processed files, -1 means all
+        create_dataset: True for creating huggingface format dataset
+        dataset_split_ratio: the ratio for splitting the dataset, e.g. {"train": 0.8, "validation": 0.1, "test": 0.1}
+                             If a single float is provided, it will be used as the train split and the rest as test.
     """
     try:
         # Create output directory with task_id
