@@ -24,6 +24,7 @@ from .base import BaseEvaluator
 from .field_evaluator import FieldEvaluator
 from collections import defaultdict
 import json
+from tqdm import tqdm
 from pathlib import Path
 from utils.logger import setup_logger
 
@@ -68,13 +69,15 @@ class SamplingEvaluator(BaseEvaluator):
 
         # Look for samples in numbered directories (sample_0, sample_1, etc.)
         for i in range(self.num_samples):
-            sample_path = base_path / f"sample_{i}{image_id}.json"
+            sample_path = base_path / f"sample_{i}/{image_id}.json"
             if sample_path.exists():
                 try:
                     with open(sample_path) as f:
                         samples.append(json.load(f))
                 except Exception as e:
                     logger.warning(f"Error loading sample {i} for {image_id}: {e}")
+            else:
+                logger.warning(f"no such file {sample_path}")
 
         return samples
 
@@ -141,7 +144,11 @@ class SamplingEvaluator(BaseEvaluator):
 
         total_images = 0
 
-        for gt_file in self.ground_truth_dir.glob("*.json"):
+        for gt_file in tqdm(
+            self.ground_truth_dir.glob("*.json"),
+            desc="evaluating accuracy per image",
+            unit="Image",
+        ):
             image_id = gt_file.stem
             try:
                 ground_truth = self.load_json(gt_file)
