@@ -32,6 +32,7 @@ from src.openllm_ocr_annotator.config import AnnotatorConfig
 
 logger = setup_logger(__name__)
 
+
 class GeminiAnnotator(BaseAnnotator):
     """Google Gemini based image annotator."""
 
@@ -40,16 +41,16 @@ class GeminiAnnotator(BaseAnnotator):
         """Create annotator instance from config."""
         return GeminiAnnotator(
             name=config.name,
-            api_key=config.api_key, 
+            api_key=config.api_key,
             model=config.model,
             task=config.task,
             max_tokens=config.max_tokens,
             base_url=config.base_url,
             prompt_path=config.prompt_path,
-        )        
+        )
 
     def __init__(
-        self, 
+        self,
         api_key: Optional[str] = None,
         name: str = "gemini_annotator",
         model: str = "gemini-2.5-pro-preview-05-06",
@@ -59,7 +60,7 @@ class GeminiAnnotator(BaseAnnotator):
         prompt_path: str | None = None,
     ):
         """Initialize OpenAI annotator.
-        
+
         Args:
             api_key: OpenAI API key. If None, uses OPENAI_API_KEY env var
             model: Model to use for vision tasks
@@ -68,13 +69,18 @@ class GeminiAnnotator(BaseAnnotator):
         """
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
         if not self.api_key:
-            raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
-        
+            raise ValueError(
+                "OpenAI API key must be provided or set in OPENAI_API_KEY environment variable"
+            )
+
         self.base_url = base_url
         if self.base_url:
-            logger.warning(f"Warning: Using custom OpenAI API endpoint: {self.base_url}")
-        self.client = genai.Client(api_key=self.api_key, 
-                                   http_options=types.HttpOptions(base_url=self.base_url))
+            logger.warning(
+                f"Warning: Using custom OpenAI API endpoint: {self.base_url}"
+            )
+        self.client = genai.Client(
+            api_key=self.api_key, http_options=types.HttpOptions(base_url=self.base_url)
+        )
         self.model = model
         self.task = task
         self.name = name
@@ -82,16 +88,14 @@ class GeminiAnnotator(BaseAnnotator):
         self.prompt_manager = PromptManager(prompt_path=prompt_path)
 
     def annotate(
-        self,
-        image_path: str,
-        variables: Optional[Dict[str, str]] = None
+        self, image_path: str, variables: Optional[Dict[str, str]] = None
     ) -> dict:
         """Annotate an image using Gemini's vision model.
-        
+
         Args:
             image_path: Path to image file
             variables: Optional variables for prompt template
-            
+
         Returns:
             dict: Annotation results
         """
@@ -101,9 +105,7 @@ class GeminiAnnotator(BaseAnnotator):
 
             # Get prompts from template manager
             prompts = self.prompt_manager.get_prompt(
-                model="gemini",
-                task=self.task,
-                variables=variables
+                model="gemini", task=self.task, variables=variables
             )
 
             # Load and prepare image
@@ -114,18 +116,18 @@ class GeminiAnnotator(BaseAnnotator):
                 model=self.model,
                 contents=[
                     types.Content(
-                        role='system',
-                        parts=[types.Part.from_text(text=prompts["system"])]
+                        role="system",
+                        parts=[types.Part.from_text(text=prompts["system"])],
                     ),
                     types.Content(
-                        role='user',
+                        role="user",
                         parts=[types.Part.from_text(text=prompts["user"])],
                     ),
                     image,
                 ],
                 config={
                     "max_output_tokens": self.max_tokens,
-                }
+                },
             )
 
             # Get first response
@@ -139,15 +141,12 @@ class GeminiAnnotator(BaseAnnotator):
                 "timestamp": int(time.time()),
                 "image_path": image_path,
                 "safety_ratings": [
-                    {
-                        "category": rating.category,
-                        "probability": rating.probability
-                    }
+                    {"category": rating.category, "probability": rating.probability}
                     for rating in response.safety_ratings
-                ] if hasattr(response, "safety_ratings") else []
+                ]
+                if hasattr(response, "safety_ratings")
+                else [],
             }
 
         except Exception as e:
             raise Exception(f"Error during Gemini annotation: {str(e)}")
-
-

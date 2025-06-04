@@ -46,7 +46,7 @@ variables:
 default:
   vision_extraction:
     system: |
-        You are an expert in {{document_type}} information extraction. 
+        You are an expert in {{document_type}} information extraction.
         Focus on extracting information from {{document_type}} images with high accuracy.
         Return the results in the following JSON format:
         {
@@ -86,7 +86,7 @@ default:
         ]
       }
     user: "Please extract all text from this image with their locations and return in the specified JSON format."
-  
+
   layout:
     system: |
       You are an expert document layout analyzer. Identify all document elements including:
@@ -102,7 +102,7 @@ default:
 openai:
   vision_extraction:
     system: |
-      You are an expert in foreign trade document analysis. Your task is to extract key information 
+      You are an expert in foreign trade document analysis. Your task is to extract key information
       from Chinese foreign trade documents with high precision. Pay special attention to:
       1. Document identifiers and numbers
       2. Dates in standard formats
@@ -119,21 +119,21 @@ openai:
          - Example: "CONTRACT-2024-001" or "FT20240101"
          - Note: Do not modify or normalize the number
          - Use "N/A" if no clear document number is found or if it's partially illegible
-      
+
       2. Contract Date
          - Format: yyyy-mm-dd
          - Example: "2024-01-01"
-      
+
       3. Buyer's Name
          - Format: Full company/entity name
          - Example: "ABC Trading Company Ltd."
          - Note: As much as possible keep the original name.
-      
+
       4. Buyer's Country/Region
          - Format: Three-letter country code (ISO 3166-1 alpha-3)
          - Example: "USA" for United States, "GBR" for United Kingdom
          - Note: Infer from address or contact details if not explicitly stated
-      
+
       5. Transaction Amount
          - Format: Number with 2 decimal places + three-letter currency code
          - Example: "123,44.50 USD" or "987,446.54 EUR"
@@ -143,25 +143,25 @@ openai:
          - ALWAYS use exactly "N/A" (not "NA", "n/a", "null", or empty string)
          - Do not try to guess or infer values if you are not highly confident
          - Example: If no document number is found, use "N/A"
-      
+
       2. Partial Information:
          - If only part of the information is available, use "N/A" rather than incomplete data
          - Example: If date is "2024-xx-xx", use "N/A" instead of partial date
-      
+
       3. Unclear or Ambiguous Values:
          - When multiple possible values exist, use "N/A" rather than guessing
          - When text is illegible or unclear, use "N/A"
-      
+
       4. Confidence Scores:
          - Use 0.99 for clear, directly stated values
          - Use 0.85-0.95 for inferred values (e.g., country codes from addresses)
          - Use 0.50 when returning "N/A" due to missing/unclear information
-      
+
       5. Additional Guidelines:
          - For country codes: only use ISO 3166-1 alpha-3, otherwise use "N/A"
          - For currency codes: only use ISO 4217, otherwise use "N/A"
          - For dates: only use yyyy-mm-dd format, otherwise use "N/A"
-      
+
       Return the results in this exact JSON format:
       {
         "fields": [
@@ -171,7 +171,7 @@ openai:
             "confidence": 0.99
           },
           {
-            "field_name": "contract_date", 
+            "field_name": "contract_date",
             "value": "N/A",
             "confidence": 0.50
           },
@@ -197,7 +197,7 @@ openai:
         }
       }
 
-      
+
   ocr:
     system: |
       You are an expert OCR annotator using GPT-4V. Please analyze the image and extract all text content.

@@ -21,6 +21,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
 
+
 class BaseVoter(ABC):
     @abstractmethod
     def vote(self, annotations: List[Dict]) -> Dict:

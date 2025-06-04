@@ -41,11 +41,12 @@ argparser.add_argument(
 if __name__ == "__main__":
     args = argparser.parse_args()
     from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
+
     config_manager = AnnotatorConfigManager.from_file(args.config)
-    
+
     annotator_configs = config_manager.get_enabled_annotators()
     weights = config_manager.get_annotator_weights()
-    task_config = config_manager.get_task_config() 
+    task_config = config_manager.get_task_config()
     ensemble_config = config_manager.get_ensemble_config()
     dataset_config = config_manager.get_dataset_config()
 
@@ -57,7 +58,7 @@ if __name__ == "__main__":
     # dataset_config = DatasetConfig(args.dataset)
     # ensemble_config = EnsembleConfig(args.ensemble)
     # ... (rest of your application logic)
-    task_config = config_manager.get_task_config() 
+    task_config = config_manager.get_task_config()
     run_batch_annotation(
         input_dir=task_config.input_dir,
         output_dir=task_config.output_dir,
@@ -70,4 +71,3 @@ if __name__ == "__main__":
         create_dataset=dataset_config.enabled,
         dataset_split_ratio=dataset_config.split_ratio,
     )
-    

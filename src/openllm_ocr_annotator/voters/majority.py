@@ -23,6 +23,7 @@ from src.openllm_ocr_annotator.voters.base import BaseVoter
 from typing import List, Dict
 from collections import Counter
 
+
 class MajorityVoter(BaseVoter):
     def vote(self, annotations: List[Dict]) -> Dict:
         """Implement majority voting strategy."""

@@ -21,6 +21,7 @@ dependencies = [
   "datasets",
   "colorlog",
   "pandas",
+  "pre-commit>=4.2.0",
 ]
 
 [project.urls]

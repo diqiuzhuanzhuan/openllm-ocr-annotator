@@ -26,10 +26,11 @@ from src.openllm_ocr_annotator.voters.base import BaseVoter
 
 logger = logging.getLogger(__name__)
 
+
 class VotingManager:
     def __init__(self, annotator_paths: List[Dict[str, str]], voter: BaseVoter):
         """Initialize VotingManager.
-        
+
         Args:
             annotator_paths: List of dicts containing annotator paths, each with:
                 - 'name': Annotator name (e.g. 'OpenAIAnnotator')
@@ -38,77 +39,76 @@ class VotingManager:
         """
         self.annotator_paths = annotator_paths
         self.voter = voter
-    
-    def collect_annotations(self, results_dir: Path, image_stem: str) -> Dict[str, Dict]:
+
+    def collect_annotations(
+        self, results_dir: Path, image_stem: str
+    ) -> Dict[str, Dict]:
         """Collect existing annotation results for an image.
-        
+
         Args:
             results_dir: Directory containing annotation results
             image_stem: Image name without extension
-            
+
         Returns:
             Dict mapping "annotator_name/model_version" to their results
         """
         results = {}
         for annotator_info in self.annotator_paths:
-            annotator_name = annotator_info['name']
-            model_version = annotator_info.get('model', 'default')
+            annotator_name = annotator_info["name"]
+            model_version = annotator_info.get("model", "default")
             annotator_dir = results_dir / annotator_name / model_version
             result_path = annotator_dir / f"{image_stem}.json"
-            
+
             try:
                 if result_path.exists():
-                    with open(result_path, 'r') as f:
+                    with open(result_path, "r") as f:
                         result_key = f"{annotator_name}/{model_version}"
                         results[result_key] = json.load(f)
             except Exception as e:
                 logger.error(f"Error loading {result_path}: {e}")
                 continue
-                
+
         if not results:
             logger.warning(f"No annotation results found for {image_stem}")
         else:
             logger.debug(f"Found {len(results)} annotation results for {image_stem}")
-            
-        return results
 
+        return results
 
     def get_voted_result(self, image_path: Path, output_dir: Path) -> Dict:
         """Get or compute voted result from individual annotations.
-        
+
         Args:
             image_path: Path to image file
             output_dir: Directory containing individual results
-            
+
         Returns:
             Dict with voted result and metadata
         """
         img_path = Path(image_path)
         voted_dir = output_dir / "voted_results"
         voted_dir.mkdir(parents=True, exist_ok=True)
-        voted_path = voted_dir / f"{img_path.stem}.json"
-        
+
         # Check if voted result already exists
-        #if voted_path.exists():
+        # if voted_path.exists():
         #    logger.info("Loading existing voted result")
         #    with open(voted_path, 'r') as f:
         #        return json.load(f)
-        
+
         # Collect existing annotations
         results = self.collect_annotations(output_dir, img_path.stem)
         if not results:
             raise ValueError(f"No valid annotations found for {img_path.name}")
-            
+
         # Run voting with annotator IDs
         annotator_ids = list(results.keys())
         annotations = list(results.values())
-        
+
         voted_result = {
             "result": self.voter.vote(annotations, annotator_ids),
             "metadata": {
                 "annotators": annotator_ids,  # List of annotator_name/model_version used
             },
         }
-        
-            
+
         return voted_result

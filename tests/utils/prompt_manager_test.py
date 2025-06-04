@@ -22,6 +22,7 @@ import yaml
 from pprint import pprint
 import json
 
+
 def print_yaml_structure(data, indent=0):
     """Pretty print YAML structure with proper indentation."""
     indent_str = "  " * indent
@@ -39,9 +40,9 @@ if __name__ == "__main__":
         data = yaml.safe_load(f)
         print("\n=== Pretty Print using custom function ===")
         print_yaml_structure(data)
-        
+
         print("\n=== Pretty Print using pprint ===")
         pprint(data, indent=2, width=80)
-        
+
         print("\n=== Pretty Print using JSON ===")
         print(json.dumps(data, indent=2, ensure_ascii=False))

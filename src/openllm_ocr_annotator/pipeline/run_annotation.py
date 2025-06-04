@@ -20,7 +20,6 @@
 
 import time
 import logging
-from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict
 from tqdm import tqdm
@@ -53,10 +52,10 @@ def run_batch_annotation(
     max_files: Optional[int] = -1,
     create_dataset: bool = True,
     dataset_split_ratio: Optional[Dict[str, float]] = None,
-    **kwargs
+    **kwargs,
 ) -> None:
     """Run batch annotation with parallel processing.
-    
+
     Args:
         input_dir: Directory containing input images
         output_dir: Directory for output files
@@ -73,25 +72,26 @@ def run_batch_annotation(
         format: Output format(s)
     """
     try:
-
         # Create output directory with task_id
         output_path = Path(output_dir) / task_id
         output_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Get image files
         image_files = get_image_files(input_dir)
         if not image_files:
             logger.warning(f"No images found in {input_dir}")
             return
 
-        # Limit number of files if max_files is specified 
+        # Limit number of files if max_files is specified
         if max_files > 0:
             logger.info(f"Limiting to {max_files} files")
             image_files = image_files[:max_files]
         # Run parallel annotation
-        processor = ParallelProcessor(annotator_configs, output_path, max_workers=max_workers)
+        processor = ParallelProcessor(
+            annotator_configs, output_path, max_workers=max_workers
+        )
         processor.run_parallel(image_files)
-        if ensemble_config and ensemble_config.enabled: 
+        if ensemble_config and ensemble_config.enabled:
             # Convert string to enum if needed
             ensemble_strategy = EnsembleStrategy.from_str(ensemble_config.method)
 
@@ -103,36 +103,39 @@ def run_batch_annotation(
             elif ensemble_strategy == EnsembleStrategy.HIGHEST_CONFIDENCE:
                 # TODO: implement HighestConfidenceVoter
                 # voter = HighestConfidenceVoter()
-                raise NotImplementedError("HighestConfidenceVoter is not implemented yet.")
+                raise NotImplementedError(
+                    "HighestConfidenceVoter is not implemented yet."
+                )
             else:
                 raise ValueError(f"Invalid voting strategy: {ensemble_strategy}")
-                
+
             annotator_paths = [
                 {
                     "results_dir": output_path,
                     "name": an_config.name,
-                    "model": an_config.model 
+                    "model": an_config.model,
                 }
-            for an_config in annotator_configs]
-                
+                for an_config in annotator_configs
+            ]
+
             voting_manager = VotingManager(annotator_paths=annotator_paths, voter=voter)
-            
+
             # Process voting for each image
             voted_dir = output_path / "voted_results"
             voted_dir.mkdir(exist_ok=True)
-            
+
             for img_path in tqdm(image_files, desc="Computing voting results"):
                 try:
                     # Get voted result
                     result = voting_manager.get_voted_result(img_path, output_path)
-                    
+
                     # Add task metadata
                     result["metadata"] = {
                         "task_id": task_id,
                         "image_path": str(img_path),
-                        "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                     }
-                    
+
                     # Save voted result in requested formats
                     if "json" in format:
                         save_as_json(result, voted_dir / f"{img_path.stem}.json")
@@ -140,13 +143,13 @@ def run_batch_annotation(
                         save_as_jsonl(result, voted_dir / f"{img_path.stem}.jsonl")
                     if "tsv" in format:
                         save_as_tsv(result, voted_dir / f"{img_path.stem}.tsv")
-                    
+
                 except Exception as e:
                     logger.error(f"Error in voting for {img_path}: {e}")
                     continue
-            
+
         logger.info(f"Completed task {task_id} with {len(image_files)} images")
-        
+
         # Convert to HuggingFace dataset if requested
         if create_dataset:
             if not ensemble_config.enabled:
@@ -156,32 +159,33 @@ def run_batch_annotation(
                 if isinstance(dataset_split_ratio, float):
                     dataset_split_ratio = {
                         "train": dataset_split_ratio,
-                        "test": 1 - dataset_split_ratio
+                        "test": 1 - dataset_split_ratio,
                     }
                 else:
                     dataset_split_ratio = dataset_split_ratio or {
                         "train": 0.8,
                         "test": 0.1,
-                        "validation": 0.1
+                        "validation": 0.1,
                     }
                 dataset_dir = output_path / "dataset"
                 logger.info("Converting results to HuggingFace dataset format...")
                 convert_to_hf_dataset(
                     voted_dir=str(voted_dir),
                     output_dir=str(dataset_dir),
-                    split_ratio=dataset_split_ratio
+                    split_ratio=dataset_split_ratio,
                 )
                 logger.info(f"Dataset created and saved to {dataset_dir}")
             except Exception as e:
                 logger.error(f"Failed to create dataset: {e}")
-        
+
     except Exception as e:
         logger.error(f"Task {task_id} failed: {str(e)}")
         raise
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
+
     config_manager = AnnotatorConfigManager.from_file("examples/config.yaml")
     annotator_configs = config_manager.get_enabled_annotators()
     weights = config_manager.get_annotator_weights()
@@ -189,7 +193,7 @@ if __name__ == "__main__":
     ensemble_config = config_manager.get_ensemble_config()
 
     # Run batch annotation with weighted voting and create dataset
-    task_config = config_manager.get_task_config() 
+    task_config = config_manager.get_task_config()
     run_batch_annotation(
         input_dir=task_config.input_dir,
         output_dir=task_config.output_dir,

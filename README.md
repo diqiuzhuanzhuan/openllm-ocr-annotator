@@ -45,7 +45,7 @@ python apps/app.py
 
 ### Usage Examples
 #### Basic Usage
-Create a 'config.yaml' file in the 'examples' directory: 
+Create a 'config.yaml' file in the 'examples' directory:
 ```yaml
 name: my_annotator
 model: gpt-4-vision-preview  # or gemini-pro-vision
@@ -54,7 +54,7 @@ task: vision_extraction
 type: openai
 base_url: 'http://127.0.0.1:8879/v1'
 enabled: true                # Disabled by default
-max_tokens: 1000 
+max_tokens: 1000
 weight: 1
 output_format: json
 temperature: null

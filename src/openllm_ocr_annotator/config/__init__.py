@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .config_manager import AnnotatorConfig
-from .config_manager import EnsembleConfig
-from .config_manager import DatasetConfig
-from .config_manager import EnsembleStrategy
 from .config_manager import AnnotatorConfigManager as ConfigManager
+
+__all__ = ["ConfigManager"]

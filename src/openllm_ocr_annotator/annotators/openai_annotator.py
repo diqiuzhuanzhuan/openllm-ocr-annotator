@@ -30,6 +30,7 @@ from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+
 class OpenAIAnnotator(BaseAnnotator):
     """OpenAI GPT-4V based image annotator."""
 
@@ -46,9 +47,9 @@ class OpenAIAnnotator(BaseAnnotator):
             prompt_path=config.prompt_path,
             n=config.num_samples,
         )
-    
+
     def __init__(
-        self, 
+        self,
         api_key: Optional[str] = None,
         name: str = "openai_annotator",
         model: str = "gpt-4-vision-preview",
@@ -57,28 +58,32 @@ class OpenAIAnnotator(BaseAnnotator):
         temperature: Optional[float] | None = None,
         base_url: str | httpx.URL | None = None,
         prompt_path: str | None = None,
-        n : int = None
+        n: int = None,
     ):
         """Initialize OpenAI annotator.
-        
+
         Args:
             api_key: OpenAI API key. If None, uses OPENAI_API_KEY env var
-            name: 
+            name:
             model: Model to use for vision tasks
             task: Annotation task type ('ocr', 'layout', 'vision_extraction')
             max_tokens: Maximum tokens for response
-            temperature: 
+            temperature:
             base_url:
             prompt_path:
-            n: 
+            n:
         """
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
-        
+            raise ValueError(
+                "OpenAI API key must be provided or set in OPENAI_API_KEY environment variable"
+            )
+
         self.base_url = base_url
         if self.base_url:
-            logger.warning(f"Warning: Using custom OpenAI API endpoint: {self.base_url}")
+            logger.warning(
+                f"Warning: Using custom OpenAI API endpoint: {self.base_url}"
+            )
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.model = model
         self.task = task
@@ -87,43 +92,36 @@ class OpenAIAnnotator(BaseAnnotator):
         self.temperature = temperature
         self.prompt_manager = PromptManager(prompt_path=prompt_path)
         self.n = n
-    
+
     @retry_with_backoff(max_retries=3, initial_delay=2.0)
     def annotate(
-        self, 
-        image_path: str,
-        variables: Optional[Dict[str, str]] = None
+        self, image_path: str, variables: Optional[Dict[str, str]] = None
     ) -> dict:
         """Annotate an image using OpenAI's vision model.
-        
+
         Args:
             image_path: Path to image file
             variables: Optional variables for prompt template
-            
+
         Returns:
             dict: Annotation results
         """
         try:
             if not os.path.exists(image_path):
                 raise FileNotFoundError(f"Image not found: {image_path}")
-            
+
             # Get prompts from template manager
             prompts = self.prompt_manager.get_prompt(
-                model="openai",
-                task=self.task,
-                variables=variables
+                model="openai", task=self.task, variables=variables
             )
-            
+
             # Encode image
-            image_b64 = self._encode_image(image_path, maximum_size=20*1024*1024)
+            image_b64 = self._encode_image(image_path, maximum_size=20 * 1024 * 1024)
             # Create API request
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": prompts["system"]
-                    },
+                    {"role": "system", "content": prompts["system"]},
                     {
                         "role": "user",
                         "content": [
@@ -131,29 +129,29 @@ class OpenAIAnnotator(BaseAnnotator):
                                 "type": "image_url",
                                 "image_url": {
                                     "url": f"data:image/jpeg;base64,{image_b64}"
-                                }
+                                },
                             },
-                            {
-                                "type": "text",
-                                "text": prompts["user"]
-                            }
-                        ]
-                    }
+                            {"type": "text", "text": prompts["user"]},
+                        ],
+                    },
                 ],
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
                 n=self.n,
             )
-            
+
             return {
-                "result": [response.choices[i].message.content for i in range(len(response.choices))],
+                "result": [
+                    response.choices[i].message.content
+                    for i in range(len(response.choices))
+                ],
                 "model": self.model,
                 "task": self.task,
                 "timestamp": response.created,
                 "image_path": image_path,
             }
-            
-        except Exception as e:
-            raise Exception(f"Error during OpenAI annotation annotate {image_path}: {str(e)}")
 
-            
+        except Exception as e:
+            raise Exception(
+                f"Error during OpenAI annotation annotate {image_path}: {str(e)}"
+            )

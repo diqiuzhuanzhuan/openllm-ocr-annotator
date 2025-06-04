@@ -19,3 +19,5 @@
 # SOFTWARE.
 
 from .run_annotation import run_batch_annotation
+
+__all__ = ["run_batch_annotation"]
