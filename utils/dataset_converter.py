@@ -25,7 +25,7 @@ import json
 from pathlib import Path
 from typing import Dict, List
 from utils.logger import setup_logger
-from datasets import Dataset, DatasetDict, Features, Value, Sequence
+from datasets import Dataset, DatasetDict, Features, Value, Sequence, Image
 
 logger = setup_logger(__name__)
 
@@ -78,6 +78,7 @@ def create_hf_dataset(
     # Prepare features for the dataset
     features = Features(
         {
+            "image": Image(),
             "image_path": Value("string"),
             "filename": Value("string"),
             "fields": Sequence(
@@ -98,8 +99,10 @@ def create_hf_dataset(
     # Convert results to dataset format
     dataset_dicts = []
     for result in results:
+        image_path = result["metadata"]["image_path"]
         dataset_dict = {
-            "image_path": result["metadata"]["image_path"],
+            "image": image_path,
+            "image_path": image_path,
             "filename": result["metadata"]["filename"],
             "fields": [
                 {
