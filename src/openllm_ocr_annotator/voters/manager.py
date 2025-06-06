@@ -28,16 +28,16 @@ logger = logging.getLogger(__name__)
 
 
 class VotingManager:
-    def __init__(self, annotator_paths: List[Dict[str, str]], voter: BaseVoter):
+    def __init__(self, annotator_infos: List[Dict[str, str]], voter: BaseVoter):
         """Initialize VotingManager.
 
         Args:
-            annotator_paths: List of dicts containing annotator paths, each with:
+            annotator_infos: List of dicts containing annotator information, each with:
                 - 'name': Annotator name (e.g. 'OpenAIAnnotator')
                 - 'model': Model version (e.g. 'gpt-4-vision-preview')
             voter: Voting strategy to use
         """
-        self.annotator_paths = annotator_paths
+        self.annotator_infos = annotator_infos
         self.voter = voter
 
     def collect_annotations(
@@ -53,7 +53,7 @@ class VotingManager:
             Dict mapping "annotator_name/model_version" to their results
         """
         results = {}
-        for annotator_info in self.annotator_paths:
+        for annotator_info in self.annotator_infos:
             annotator_name = annotator_info["name"]
             model_version = annotator_info.get("model", "default")
             annotator_dir = results_dir / annotator_name / model_version
