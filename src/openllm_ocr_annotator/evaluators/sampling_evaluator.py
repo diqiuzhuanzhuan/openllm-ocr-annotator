@@ -117,7 +117,7 @@ class SamplingEvaluator(BaseEvaluator):
 
         # Calculate statistics
         accuracies = [s["accuracy"] for s in sample_scores]
-        exact_matches = [s["exact_match"] for s in sample_scores]
+        exact_matches = any([s["exact_match"] for s in sample_scores])
 
         return {
             "best_sample": best_sample,
@@ -125,7 +125,7 @@ class SamplingEvaluator(BaseEvaluator):
                 "mean_accuracy": sum(accuracies) / len(accuracies),
                 "max_accuracy": max(accuracies),
                 "min_accuracy": min(accuracies),
-                "exact_match_rate": sum(exact_matches) / len(exact_matches),
+                "exact_match_rate": 1.0 if exact_matches else 0.0,
                 "total_samples": len(samples),
             },
         }
