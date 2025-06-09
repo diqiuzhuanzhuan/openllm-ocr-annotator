@@ -47,19 +47,32 @@ python apps/app.py
 #### Basic Usage
 Create a 'config.yaml' file in the 'examples' directory:
 ```yaml
-name: my_annotator
-model: gpt-4-vision-preview  # or gemini-pro-vision
-api_key: your_api_key_here
-task: vision_extraction
-type: openai
-base_url: 'http://127.0.0.1:8879/v1'
-enabled: true                # Disabled by default
-max_tokens: 1000
-weight: 1
-output_format: json
-temperature: null
-prompt_path: "./examples/prompt_templates.yaml"
+version: "1.0"
+task:
+  # Basic Configuration
+  # -----------------------------------------------------------------------------
+  task_id: mytask
+  input_dir: "./data/images"           # Source image directory
+  output_dir: "./data/outputs"         # Output directory for annotations
+  max_files: -1                       # Set as 10 when to test overall process.
+
+annotators:
+  - name: my_annotator
+    model: gpt-4-vision-preview  # or gemini-pro-vision
+    api_key: your_api_key_here
+    task: vision_extraction
+    type: openai                 # Use api compatible with OpenAI
+    base_url: 'http://127.0.0.1:8879/v1'   # If you set up your own OpenAI compatible API server
+    enabled: true                # Disable this annotator by setting to false
+    max_retries: 3
+    max_tokens: 1000
+    weight: 1
+    output_format: json
+    temperature: null
+    prompt_path: "./examples/prompt_templates.yaml"
 ```
+**Note**: All annotation results will be stored in '{task.output_dir}/{annotator.name}/{annotator.model}'. So you can set up many annotators.
+
 **Actually, refering to config.yaml provided in the 'examples' directory is the best choice.**
 #### basic useage
 ```python
