@@ -120,8 +120,12 @@ def main():
         field_name = field.get("field_name", "")
         value = field.get("value", "")
         label = f"{field_name}: {value} (Confidence: {confidence:.2f})"
-        if confidence < 0.85:
-            label += " ⚠️ Low confidence"
+        if confidence < 0.65:
+            label += " ⚠️ Low confidence "
+        elif confidence < 0.85:
+            label += " 🟡 Medium confidence"
+        else:
+            label += " 🟢 High confidence"
 
         # Use a unique key for each checkbox and update the session state directly
         checked = st.checkbox(
