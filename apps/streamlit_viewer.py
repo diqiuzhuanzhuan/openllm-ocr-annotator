@@ -106,7 +106,11 @@ def main():
     # Initialize checked_fields for the current document if not present
     if selected_doc_id not in st.session_state.all_checked_fields:
         st.session_state.all_checked_fields[selected_doc_id] = {
-            field.get("field_name", ""): True for field in selected_doc["fields"]
+            field.get("field_name", ""): {
+                "value": field.get("value", ""),
+                "checked": True,
+            }
+            for field in selected_doc["fields"]
         }
 
     current_doc_checked_fields = st.session_state.all_checked_fields[selected_doc_id]
@@ -122,31 +126,73 @@ def main():
         # Use a unique key for each checkbox and update the session state directly
         checked = st.checkbox(
             label,
-            value=current_doc_checked_fields.get(field_name, True),
+            value=current_doc_checked_fields.get(field_name, {}).get("checked", True),
             key=f"{selected_doc_id}_{field_name}",
         )
-        current_doc_checked_fields[field_name] = checked
+        current_doc_checked_fields[field_name]["checked"] = checked
 
     # Calculate and display overall accuracy across all sampled documents
     total_fields_overall = 0
     correct_fields_overall = 0
+    all_correct_documents = 0
+    total_documents_evaluated = 0
+
+    # For field-level accuracy
+    field_counts = {}
+    field_correct_counts = {}
 
     for doc_id, fields_state in st.session_state.all_checked_fields.items():
-        total_fields_overall += len(fields_state)
-        correct_fields_overall += sum(1 for v in fields_state.values() if v)
+        total_documents_evaluated += 1
+        doc_is_all_correct = True
+        for field_name, field_info in fields_state.items():
+            total_fields_overall += 1
+            if field_info["checked"]:
+                correct_fields_overall += 1
+            else:
+                doc_is_all_correct = False
 
+            # Update field-level counts
+            field_counts[field_name] = field_counts.get(field_name, 0) + 1
+            if field_info["checked"]:
+                field_correct_counts[field_name] = (
+                    field_correct_counts.get(field_name, 0) + 1
+                )
+
+        if doc_is_all_correct:
+            all_correct_documents += 1
+
+    st.subheader("Overall Statistics")
     if total_fields_overall > 0:
         overall_accuracy = (correct_fields_overall / total_fields_overall) * 100
-        st.metric(
-            label="Overall Accuracy Across Sampled Documents",
-            value=f"{overall_accuracy:.2f}%",
-        )
+        st.metric(label="Overall Field Accuracy", value=f"{overall_accuracy:.2f}%")
     else:
         st.info("No fields to evaluate across sampled documents.")
 
-    # Remove the Submit Checked Fields button as accuracy is dynamic
-    # if st.button("Submit Checked Fields"):
-    #     st.write("Checked fields:", {k: v for k, v in checked_fields.items() if v})
+    if total_documents_evaluated > 0:
+        all_correct_rate = (all_correct_documents / total_documents_evaluated) * 100
+        st.metric(label="All Correct Document Rate", value=f"{all_correct_rate:.2f}%")
+    else:
+        st.info("No documents to evaluate for all correct rate.")
+
+    st.subheader("Field-level Accuracy")
+    field_accuracy_data = []
+    for field_name in sorted(field_counts.keys()):
+        total = field_counts[field_name]
+        correct = field_correct_counts.get(field_name, 0)
+        accuracy = (correct / total) * 100 if total > 0 else 0
+        field_accuracy_data.append(
+            {
+                "Field Name": field_name,
+                "Accuracy": f"{accuracy:.2f}%",
+                "Correct": correct,
+                "Total": total,
+            }
+        )
+
+    if field_accuracy_data:
+        st.dataframe(field_accuracy_data, use_container_width=True)
+    else:
+        st.info("No field data to display.")
 
     col1, col2 = st.columns(2)
     with col1:
