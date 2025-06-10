@@ -22,6 +22,7 @@ dependencies = [
   "colorlog",
   "pandas",
   "pre-commit>=4.2.0",
+  "streamlit>=1.45.1",
 ]
 
 [project.urls]
