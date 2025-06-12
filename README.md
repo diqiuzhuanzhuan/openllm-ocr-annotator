@@ -71,6 +71,25 @@ annotators:
     temperature: null
     prompt_path: "./examples/prompt_templates.yaml"
 ```
+
+prompt_templates.yaml:
+
+```yaml
+openai:  # must be the same as the 'type' field in the annotator configuration
+  vision_extraction: # must be the same as the 'task' field in the annotator configuration
+    system: |
+      You are an expert in foreign trade document analysis. Your task is to extract key information
+      from Chinese foreign trade documents with high precision. Pay special attention to:
+      1. Document identifiers and numbers
+      2. Dates in standard formats
+      3. Company names and addresses
+      4. Transaction amounts and currencies
+      5. Geographic information
+
+    user: |
+      Analyze this foreign trade document and extract the following specific fields:......
+
+```
 **Note**: All annotation results will be stored in '{task.output_dir}/{annotator.name}/{annotator.model}'. So you can set up many annotators.
 
 **Actually, refering to config.yaml provided in the 'examples' directory is the best choice.**
