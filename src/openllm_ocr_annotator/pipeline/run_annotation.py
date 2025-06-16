@@ -185,6 +185,7 @@ def run_batch_annotation(
                 task_id,
             )
         if create_dataset and voted_dir:
+            output_path = Path(task_config.output_dir) / Path(dataset_config.output_dir)
             convert_to_hf_if_needed(
                 create_dataset,
                 ensemble_config,
