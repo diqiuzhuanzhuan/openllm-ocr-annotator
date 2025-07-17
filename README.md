@@ -98,6 +98,10 @@ openai:  # must be the same as the 'type' field in the annotator configuration
 python apps/app.py --config examples/config.yaml
 ```
 
+#### verify the annotations (sample n samples and verify by human)
+```python
+streamlit run apps/stramlit_viewer.py
+```
 
 🔧 Coming soon: Web-based UI / Demo via GitHub Actions page.
 
