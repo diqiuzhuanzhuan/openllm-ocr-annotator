@@ -26,12 +26,13 @@ from typing import List, Dict, Optional, Union
 from tqdm import tqdm
 import time
 from src.openllm_ocr_annotator.config import AnnotatorConfig
+from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
 from utils.formatter import parse_json_from_text
 
 logger = setup_logger(__name__)
 
 
-def create_annotator(config: AnnotatorConfig):
+def create_annotator(config: AnnotatorConfig)->"BaseAnnotator":
     """Create a new annotator instance from config."""
     if config.type == "openai":
         from src.openllm_ocr_annotator.annotators.openai_annotator import (
@@ -133,7 +134,7 @@ class AnnotatorProcessor:
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [
-                executor.submit(self.process_single_image, str(img_path))
+                executor.submit(self.process_single_image, img_path)
                 for img_path in image_files
             ]
             _ = [
@@ -204,7 +205,7 @@ class AnnotatorProcessor:
             logger.error(f"Error saving result to {save_path}: {e}")
 
     def process_single_image(
-        self, image_path: str
+        self, image_path: Path
     ) -> Optional[Union[Dict, List[Dict]]]:
         """Process single image and save result(s).
 
@@ -215,12 +216,10 @@ class AnnotatorProcessor:
             In single mode: Processed result dictionary or None if failed
             In sampling mode: List of result dictionaries or None if failed
         """
-        img_path = Path(image_path)
-
         if self.num_samples > 1:
-            return self._process_sampling_mode(img_path)
+            return self._process_sampling_mode(image_path)
         else:
-            return self._process_single_mode(img_path)
+            return self._process_single_mode(image_path)
 
     def _process_single_mode(self, img_path: Path) -> Optional[Dict]:
         """Process image in single result mode."""
@@ -230,7 +229,10 @@ class AnnotatorProcessor:
         if result_path.exists():
             try:
                 with open(result_path, "r") as f:
-                    return json.load(f)
+                    result = json.load(f)
+                    annotation = result.get("result",None)
+                    if annotation:
+                        return result
             except Exception as e:
                 logger.error(f"Error loading cached result for {img_path}: {e}")
 
