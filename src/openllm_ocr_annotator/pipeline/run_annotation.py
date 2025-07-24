@@ -59,12 +59,12 @@ def collect_image_files(input_dir: str, max_files: int) -> List[Path]:
 
 def run_parallel_annotation(
     annotator_configs: List[AnnotatorConfig],
-    output_path: str,
-    image_files: List[str],
+    output_path: Path,
+    image_files: List[Path],
     max_workers: int = 8,
 ):
     processor = ParallelProcessor(
-        annotator_configs, output_path, max_workers=max_workers
+        annotator_configs=annotator_configs, output_dir=output_path, max_workers=max_workers
     )
     processor.run_parallel(image_files)
 
@@ -72,10 +72,11 @@ def run_parallel_annotation(
 def run_voting_and_save(
     ensemble_config: EnsembleConfig,
     annotator_configs: List[AnnotatorConfig],
-    output_path: str,
-    image_files: List[str],
+    output_path: Path,
+    image_files: List[Path],
     format: str,
     task_id: str,
+    num_samples:int = 1,
 ):
     ensemble_strategy = EnsembleStrategy.from_str(ensemble_config.method)
     if ensemble_strategy == EnsembleStrategy.SIMPLE_VOTE:
@@ -101,7 +102,7 @@ def run_voting_and_save(
 
     for img_path in tqdm(image_files, desc="Computing voting results"):
         try:
-            result = voting_manager.get_voted_result(img_path, output_path)
+            result = voting_manager.get_voted_result(image_path=img_path, output_dir=output_path,num_samples=num_samples)
             result["metadata"] = {
                 "task_id": task_id,
                 "image_path": str(img_path),
@@ -163,6 +164,7 @@ def run_batch_annotation(
     max_files: Optional[int] = -1,
     create_dataset: bool = True,
     dataset_split_ratio: Optional[Dict[str, float]] = None,
+    num_samples: int = 1,
     **kwargs,
 ) -> None:
     """Run batch annotation with parallel processing."""
@@ -183,6 +185,7 @@ def run_batch_annotation(
                 image_files,
                 format,
                 task_id,
+                num_samples
             )
         if create_dataset and voted_dir:
             output_path = Path(task_config.output_dir) / Path(dataset_config.output_dir)
@@ -221,4 +224,6 @@ if __name__ == "__main__":
         max_files=task_config.max_files,
         create_dataset=dataset_config.enabled,
         dataset_split_ratio=dataset_config.split_ratio,
+        max_workers=task_config.max_workers,
+        num_samples=task_config.num_samples,
     )
