@@ -70,4 +70,5 @@ if __name__ == "__main__":
         max_files=task_config.max_files,
         create_dataset=dataset_config.enabled,
         dataset_split_ratio=dataset_config.split_ratio,
+        num_samples=task_config.num_samples,
     )
