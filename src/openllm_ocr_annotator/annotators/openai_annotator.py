@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
+import os,time
 from typing import Optional, Dict
 from openai import OpenAI
 from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
@@ -137,7 +137,7 @@ class OpenAIAnnotator(BaseAnnotator):
                 ],
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
-                n=self.n,
+                n=self.n,# get n sample results
             )
 
             return {
@@ -147,7 +147,7 @@ class OpenAIAnnotator(BaseAnnotator):
                 ],
                 "model": self.model,
                 "task": self.task,
-                "timestamp": response.created,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "image_path": image_path,
             }
 
