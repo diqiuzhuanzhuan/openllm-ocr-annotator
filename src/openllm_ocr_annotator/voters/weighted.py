@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import json
 import logging
 from src.openllm_ocr_annotator.voters.base import BaseVoter
 from typing import List, Dict, Optional
@@ -44,12 +44,15 @@ class WeightedVoter(BaseVoter):
         self.weights = weights or {}
         self.default_weight = 1.0
 
-    def get_weight(self, annotator_id: str) -> float:
+    def get_weight(self, annotator_id: str,num_samples:int=1) -> float:
         """Get weight for an annotator."""
+        if num_samples > 1:
+            i = annotator_id.split("_")[-1]
+            annotator_id = annotator_id.replace(f"/sample_{i}","")
         return self.weights.get(annotator_id, self.default_weight)
 
     def vote(
-        self, annotations: List[Dict], annotator_ids: Optional[List[str]] = None
+        self, annotations: List[Dict], annotator_ids: Optional[List[str]] = None,num_samples: Optional[int] = 1
     ) -> Dict:
         """Implement voting strategy by custom weighting.
 
@@ -73,12 +76,25 @@ class WeightedVoter(BaseVoter):
             raise ValueError("Number of annotations and annotator IDs must match")
 
         # Initialize results structure
+        '''
+        Data structure:
+        {
+          "filed_name_1": {
+            "filed_value_1": 0.6,
+            "filed_value_2": 0.4
+          },
+          "filed_name_2": {
+            "filed_value_1": 1.0,
+            "filed_value_2": 0.4
+          }
+        }
+        '''
         voted_fields = defaultdict(lambda: defaultdict(float))
 
         # Process each annotation
         for annotation, annotator_id in zip(annotations, annotator_ids):
             # Get the weight for this annotator/model
-            weight = self.get_weight(annotator_id)
+            weight = self.get_weight(annotator_id,num_samples)
 
             # Get fields from the result
             fields = annotation.get("result", {}).get("fields", [])
