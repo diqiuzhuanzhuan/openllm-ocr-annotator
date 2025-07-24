@@ -61,10 +61,11 @@ class AnnotatorConfig:
     weight: float = 1.0
     output_format: str = "json"
     max_tokens: Optional[int] = None
-    temperature: Optional[float] = None
+    temperature: Optional[float] = 0
     enabled: bool = True
     prompt_path: Optional[str] = None
-    num_samples: Optional[str] = 1
+    num_samples: Optional[str] = 1 # 如果要进行采样，则需要将num_samples调到1以上，同时将温度temperature调到0~1之间
+
 
     @classmethod
     def from_dict(cls, config: Dict) -> "AnnotatorConfig":
@@ -97,7 +98,7 @@ class EnsembleConfig:
     enabled: bool = True
 
     @classmethod
-    def from_dict(cls, config: Dict) -> None:
+    def from_dict(cls, config: Dict) -> "EnsembleConfig":
         """Load configuration from a dictionary"""
         return cls(
             method=EnsembleStrategy.from_str(config.get("method", "weighted_vote")),
@@ -129,7 +130,7 @@ class DatasetConfig:
             version=config.get("version", "1.0"),
             description=config.get("description", ""),
             format=config.get("format", "json"),
-            output_dir=config.get("output_dir", "./datasets"),
+            output_dir = Path(config.get("output_dir", "./datasets")) / Path(config.get("name", "default_dataset")),
             split_ratio=config.get("split_ratio", 0.8),
             num_samples=config.get("num_samples", -1),
             enabled=config.get("enabled", True),
@@ -147,10 +148,12 @@ class TaskConfig:
     annotators: List[AnnotatorConfig]
     ensemble: EnsembleConfig
     dataset: DatasetConfig
+    max_workers: Optional[int] = 8
     max_files: int = -1  # -1 means no limit
+    num_samples: int=1 # 每个样本进行采样的次数
 
     @classmethod
-    def from_dict(cls, config: Dict) -> None:
+    def from_dict(cls, config: Dict) -> "TaskConfig":
         """Load configuration from a dictionary"""
         return cls(**config)
 
@@ -256,6 +259,8 @@ class AnnotatorConfigManager:
             annotators=annotators,
             ensemble=ensemble,
             dataset=dataset,
+            max_workers=task_config.get("max_workers", 8),
+            num_samples=task_config.get("num_samples", 1),
         )
 
     def get_enabled_annotators(self) -> List[AnnotatorConfig]:
