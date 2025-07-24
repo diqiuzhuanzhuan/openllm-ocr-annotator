@@ -138,7 +138,7 @@ class GeminiAnnotator(BaseAnnotator):
                 "model": self.model,
                 "task": self.task,
                 # Gemini doesn't provide timestamp
-                "timestamp": int(time.time()),
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "image_path": image_path,
                 "safety_ratings": [
                     {"category": rating.category, "probability": rating.probability}
