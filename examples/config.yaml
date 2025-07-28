@@ -1,108 +1,170 @@
 # =============================================================================
-# OCR Annotator Configuration
+# OCR Annotator Development Configuration
 # =============================================================================
 version: "1.0"
 
 task:
   # Basic Configuration
   # -----------------------------------------------------------------------------
-  task_id: foreign_trade_20250519
-  input_dir: "./data/images"           # Source image directory
-  output_dir: "./data/outputs"         # Output directory for annotations
-  max_files: 20                        # -1 for all files, or specify a number
-
+  task_id: &tid bank_bill_xl_20250724
+  input_dir: "/data/share/mllm/bank_bill"           # Source image directory
+  output_dir: "/data/share/mllm/bank_bill_annotations"         # Output directory for annotations
+  max_files: 50                       # -1 for all files, or specify a number
+  max_workers: 10 # max threads number for each annotator
+  num_samples: &num_samples 3
+  
   # Annotator Configurations
   # -----------------------------------------------------------------------------
   annotators:
-    # GPT-4 Vision Preview
-    - name: "gpt-4-vision-preview"     # Primary vision model
-      type: openai                     # Api format: openai like if set "openai"
+    - name: "claude-3-7-sonnet"     # Primary vision model
+      type: openai                     # API type, default by openai
       task: "vision_extraction"        # Prompt template key
-      model: "gpt-4-vision-preview"
+      model: "claude-3-7-sonnet-20250219"    # Model identifier
+      base_url: 'https://xxxx'
+      api_key: "xxx"
       weight: 1.0                      # Highest weight in ensemble
       output_format: json
       max_tokens: 1000
-      temperature: null                # Default to deterministic output
-      enabled: true
+      temperature: 0.0                # Default to deterministic output
+      enabled: false
       prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
 
-    # GPT-4.1 Vision Model
-    - name: "gpt-4.1-2025-04-14"
-      type: openai
-      task: "vision_extraction"
-      model: "gpt-4.1-2025-04-14"
-      weight: 1.0
+    # GPT-4 Vision Preview (Development Environment)
+    - name: "gpt-4-vision"     # Primary vision model
+      type: openai                     # Service provider
+      task: "vision_extraction"        # Prompt template key
+      model: "gpt-4-vision-preview"    # Model identifier
+      base_url: 'https://xxxx'
+      api_key: "xxx"
+      weight: 0.9                     # Highest weight in ensemble
       output_format: json
       max_tokens: 1000
-      temperature: null
+      temperature: 0.0                # Default to deterministic output
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
+
+    # GPT-4.1 Vision Model
+    - name: "gpt-4.1"
+      type: openai
+      task: "vision_extraction"        # Load specific prompt template
+      model: "gpt-4.1-2025-04-14"
+      base_url: 'https://xxxx'
+      api_key: "xxx"
+      weight: 0.95
+      output_format: json
+      max_tokens: 1000
+      temperature: 0.0
+      enabled: false
+      prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
 
     # ChatGPT-4 Latest
-    - name: "chatgpt-4o-latest"
+    - name: "chatgpt-4o"
       type: openai
       task: "vision_extraction"
       model: "chatgpt-4o-latest"
+      base_url: 'https://xxxx'
+      api_key: "xxx"
       weight: 0.9
       output_format: json
-      max_tokens: 1000
-      temperature: null
+      max_tokens: 4096
+      temperature: 0.0
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
 
     # GPT-4 2024 Model
-    - name: "gpt-4o-2024-11-20"
+    - name: "gpt-4o"
       type: openai
       task: "vision_extraction"
       model: "gpt-4o-2024-11-20"
-      weight: 0.85
+      base_url: 'https://xxxx'
+      api_key: "xxx"
+      weight: 0.8
       output_format: json
-      max_tokens: 1000
-      temperature: null
+      max_tokens: 4096
+      temperature: 0.0
+      enabled: false
+      prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
+
+    - name: "gemini-2.5-flash"
+      type: openai
+      task: "vision_extraction"
+      model: "gemini-2.5-flash-preview-05-20"
+      base_url: 'https://xxxx'
+      api_key: "xxx"
+      weight: 1.0
+      output_format: json
+      max_tokens: 4096
+      temperature: 0.0
+      enabled: false
+      prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
+
+    - name: "gemini-2.5-pro"
+      type: openai
+      task: "vision_extraction"
+      model: "gemini-2.5-pro-preview-05-06"
+      base_url: 'https://xxxx'
+      api_key: "xxx"
+      weight: 1.1
+      output_format: json
+      max_tokens: 8192
+      temperature: 0.0
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
 
-
-    # Gemini 2.0 Flash
     - name: "gemini-2.0-flash"
       type: openai
       task: "vision_extraction"
       model: "gemini-2.0-flash"
-      weight: 1.0
+      base_url: 'https://xxxx'
+      api_key: "xxx"
+      weight: 0.95
       output_format: json
-      max_tokens: 1000
-      temperature: null
-      enabled: true
+      max_tokens: 4096
+      temperature: 0.0
+      enabled: false
       prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
 
-    # Local Qwen Model
-    - name: "qwen-2.5vl"
-      type: "qwen2.5"
+
+    # Local Mistral Model
+    - name: "Mistral"
+      type: openai
       task: "vision_extraction"
-      enabled: false                   # Disabled by default
-      base_url: "http://xxxxx.api/v1"
-      weight: 0.5
+      model: "Mistral-Small-3.1-24B-Instruct-2503"
+      enabled: false                 # Disabled by default
+      base_url: 'https://xxxx'
+      weight: 1
       output_format: json
-      max_tokens: 1000
+      max_tokens: 4096
+      temperature: 0.0
       prompt_path: "./examples/prompt_templates.yaml"
+      num_samples: *num_samples
 
   # Ensemble Configuration
   # -----------------------------------------------------------------------------
   ensemble:
-    enabled: true
     method: "weighted_vote"            # Options: weighted_vote, simple_vote, highest_confidence
     min_confidence: 0.5               # Minimum confidence threshold
     agreement_threshold: 0.6          # Minimum annotator agreement ratio
     output_format: json               # Ensemble output format
+    enabled: true
 
   # Dataset Generation Settings
   # -----------------------------------------------------------------------------
   dataset:
-    enabled: true                     #
-    name: "foreign_trade_20250519"    # Output dataset name
-    version: "1.0"
-    description: "Dataset for foreign trade document analysis."
-    format: json
-    output_dir: "./datasets/foreign_trade_20250519"
+    name: *tid                       # Output dataset name
+    version: "1.0"                    
+    description: "Dataset for bank bill document analysis."  # Dataset description
+    format: json                      
+    output_dir: "./xl_datasets/"       # Output directory for the dataset,final dataset will be output_dir/name
     split_ratio: 0.9                  # Train/test split ratio
     num_samples: -1                   # -1 for all samples
+    enabled: false                    # Whether to generate huggingface style datasets
+
