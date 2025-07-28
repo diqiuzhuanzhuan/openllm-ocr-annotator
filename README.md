@@ -100,7 +100,7 @@ python apps/app.py --config examples/config.yaml
 
 #### verify the annotations (sample n samples and verify the annotations)
 ```python
-streamlit run apps/stramlit_viewer.py
+streamlit run apps/streamlit_viewer.py
 ```
 You will get the accuracy of the annotations, and you can also view the annotations in a web-based UI.
 
