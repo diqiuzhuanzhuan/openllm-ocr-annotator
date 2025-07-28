@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from .config_manager import AnnotatorConfigManager as ConfigManager
-from .config_manager import AnnotatorConfig, EnsembleConfig, TaskConfig
+from .config_manager import AnnotatorConfig, EnsembleConfig, TaskConfig, DatasetConfig
 from .config_manager import EnsembleStrategy
 
 __all__ = [
@@ -28,4 +28,5 @@ __all__ = [
     "EnsembleConfig",
     "TaskConfig",
     "EnsembleStrategy",
+    "DatasetConfig",
 ]

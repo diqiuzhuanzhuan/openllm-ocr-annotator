@@ -28,7 +28,7 @@ from src.openllm_ocr_annotator.voters.majority import MajorityVoter
 from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
 from src.openllm_ocr_annotator.voters.manager import VotingManager
 from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
-from src.openllm_ocr_annotator.config import AnnotatorConfig
+from src.openllm_ocr_annotator.config import AnnotatorConfig, TaskConfig, DatasetConfig
 from src.openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
 from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
 from utils.file_utils import get_image_files
@@ -64,7 +64,9 @@ def run_parallel_annotation(
     max_workers: int = 8,
 ):
     processor = ParallelProcessor(
-        annotator_configs=annotator_configs, output_dir=output_path, max_workers=max_workers
+        annotator_configs=annotator_configs,
+        output_dir=output_path,
+        max_workers=max_workers,
     )
     processor.run_parallel(image_files)
 
@@ -76,7 +78,7 @@ def run_voting_and_save(
     image_files: List[Path],
     format: str,
     task_id: str,
-    num_samples:int = 1,
+    num_samples: int = 1,
 ):
     ensemble_strategy = EnsembleStrategy.from_str(ensemble_config.method)
     if ensemble_strategy == EnsembleStrategy.SIMPLE_VOTE:
@@ -102,7 +104,9 @@ def run_voting_and_save(
 
     for img_path in tqdm(image_files, desc="Computing voting results"):
         try:
-            result = voting_manager.get_voted_result(image_path=img_path, output_dir=output_path,num_samples=num_samples)
+            result = voting_manager.get_voted_result(
+                image_path=img_path, output_dir=output_path, num_samples=num_samples
+            )
             result["metadata"] = {
                 "task_id": task_id,
                 "image_path": str(img_path),
@@ -153,13 +157,11 @@ def convert_to_hf_if_needed(
 
 
 def run_batch_annotation(
-    input_dir: str,
-    output_dir: str,
+    task_config: TaskConfig,
+    dataset_config: DatasetConfig,
     annotator_configs: List[AnnotatorConfig],
-    task_id: str,
     max_workers: int = 8,
     ensemble_config: EnsembleConfig | None = None,
-    voting_weights: Optional[Dict[str, float]] = None,
     format: str | List[str] = "json",
     max_files: Optional[int] = -1,
     create_dataset: bool = True,
@@ -169,10 +171,10 @@ def run_batch_annotation(
 ) -> None:
     """Run batch annotation with parallel processing."""
     try:
-        output_path = prepare_output_dir(output_dir, task_id)
-        image_files = collect_image_files(input_dir, max_files)
+        output_path = prepare_output_dir(task_config.output_dir, task_config.task_id)
+        image_files = collect_image_files(task_config.input_dir, max_files)
         if not image_files:
-            logger.warning(f"No images found in {input_dir}")
+            logger.warning(f"No images found in {task_config.input_dir}")
             return
         run_parallel_annotation(
             annotator_configs, output_path, image_files, max_workers
@@ -184,8 +186,8 @@ def run_batch_annotation(
                 output_path,
                 image_files,
                 format,
-                task_id,
-                num_samples
+                task_config.task_id,
+                num_samples,
             )
         if create_dataset and voted_dir:
             output_path = Path(task_config.output_dir) / Path(dataset_config.output_dir)
@@ -197,9 +199,11 @@ def run_batch_annotation(
                 output_path,
             )
             logger.info("Create dataset successfully.")
-        logger.info(f"Completed task {task_id} with {len(image_files)} images")
+        logger.info(
+            f"Completed task {task_config.task_id} with {len(image_files)} images"
+        )
     except Exception as e:
-        logger.error(f"Task {task_id} failed: {str(e)}")
+        logger.error(f"Task {task_config.task_id} failed: {str(e)}")
         raise e
 
 

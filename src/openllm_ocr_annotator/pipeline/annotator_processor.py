@@ -32,7 +32,7 @@ from utils.formatter import parse_json_from_text
 logger = setup_logger(__name__)
 
 
-def create_annotator(config: AnnotatorConfig)->"BaseAnnotator":
+def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
     """Create a new annotator instance from config."""
     if config.type == "openai":
         from src.openllm_ocr_annotator.annotators.openai_annotator import (
@@ -70,8 +70,6 @@ class AnnotatorProcessor:
             annotator: The annotator to process images with
             output_dir: Base output directory for results
             max_workers: Maximum number of parallel workers (default: 8)
-            num_samples: Number of samples to generate per image (default: 1)
-            sampling_temperature: Temperature for sampling (default: None)
         """
         self.annotator = create_annotator(annotator_config)
         # Create output directory structure
@@ -230,7 +228,7 @@ class AnnotatorProcessor:
             try:
                 with open(result_path, "r") as f:
                     result = json.load(f)
-                    annotation = result.get("result",None)
+                    annotation = result.get("result", None)
                     if annotation:
                         return result
             except Exception as e:

@@ -60,12 +60,11 @@ if __name__ == "__main__":
     # ... (rest of your application logic)
     task_config = config_manager.get_task_config()
     run_batch_annotation(
-        input_dir=task_config.input_dir,
-        output_dir=task_config.output_dir,
-        task_id=task_config.task_id,
-        max_workers=args.max_workers,
+        task_config=task_config,
+        dataset_config=dataset_config,
         annotator_configs=annotator_configs,
         ensemble_config=ensemble_config,
+        max_workers=args.max_workers,
         voting_weights=weights,
         max_files=task_config.max_files,
         create_dataset=dataset_config.enabled,
