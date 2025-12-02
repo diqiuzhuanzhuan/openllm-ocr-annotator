@@ -21,8 +21,8 @@
 import os
 from typing import Optional, Dict
 from anthropic import Anthropic
-from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
-from utils.prompt_manager import PromptManager
+from openllm_ocr_annotator.annotators.base import BaseAnnotator
+from openllm_ocr_annotator.utils.prompt_manager import PromptManager
 
 
 class ClaudeAnnotator(BaseAnnotator):

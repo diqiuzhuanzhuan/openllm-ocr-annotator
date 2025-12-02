@@ -19,14 +19,14 @@
 # SOFTWARE.
 
 import os
+import httpx
 from typing import Optional, Dict
 from openai import OpenAI
-from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
-from src.openllm_ocr_annotator.config import AnnotatorConfig
-from utils.prompt_manager import PromptManager
-import httpx
-from utils.retry import retry_with_backoff
-from utils.logger import setup_logger
+from openllm_ocr_annotator.annotators.base import BaseAnnotator
+from openllm_ocr_annotator.config import AnnotatorConfig
+from openllm_ocr_annotator.utils.prompt_manager import PromptManager
+from openllm_ocr_annotator.utils.retry import retry_with_backoff
+from openllm_ocr_annotator.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

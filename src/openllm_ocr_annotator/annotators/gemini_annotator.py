@@ -20,15 +20,15 @@
 
 import os
 import time
+import httpx
 from typing import Optional, Dict
 from PIL import Image
 from google import genai
-from src.openllm_ocr_annotator.annotators.base import BaseAnnotator
-from utils.prompt_manager import PromptManager
 from google.genai import types
-import httpx
-from utils.logger import setup_logger
-from src.openllm_ocr_annotator.config import AnnotatorConfig
+from openllm_ocr_annotator.annotators.base import BaseAnnotator
+from openllm_ocr_annotator.utils.prompt_manager import PromptManager
+from openllm_orc_annotator.utils.logger import setup_logger
+from openllm_ocr_annotator.config import AnnotatorConfig
 
 logger = setup_logger(__name__)
 

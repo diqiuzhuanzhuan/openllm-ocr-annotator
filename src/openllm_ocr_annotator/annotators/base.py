@@ -25,7 +25,7 @@ import os
 from io import BytesIO
 from PIL import Image
 from PIL import ImageFile
-from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfig
+from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
 from utils.logger import setup_logger
 
 # allow dealing with large images
