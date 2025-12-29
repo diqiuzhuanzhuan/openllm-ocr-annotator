@@ -23,6 +23,7 @@ dependencies = [
   "pandas",
   "pre-commit>=4.2.0",
   "streamlit>=1.45.1",
+  "litellm>=1.80.11",
 ]
 
 [project.urls]
