@@ -27,7 +27,7 @@ from google import genai
 from google.genai import types
 from openllm_ocr_annotator.annotators.base import BaseAnnotator
 from openllm_ocr_annotator.utils.prompt_manager import PromptManager
-from openllm_orc_annotator.utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 from openllm_ocr_annotator.config import AnnotatorConfig
 
 logger = setup_logger(__name__)
