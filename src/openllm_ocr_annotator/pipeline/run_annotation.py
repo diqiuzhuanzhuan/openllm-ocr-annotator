@@ -80,7 +80,7 @@ def run_voting_and_save(
     task_id: str,
     num_samples: int = 1,
 ):
-    ensemble_strategy = EnsembleStrategy.from_str(ensemble_config.method)
+    ensemble_strategy = ensemble_config.method
     if ensemble_strategy == EnsembleStrategy.SIMPLE_VOTE:
         voter = MajorityVoter()
     elif ensemble_strategy == EnsembleStrategy.WEIGHTED_VOTE:
@@ -179,6 +179,7 @@ def run_batch_annotation(
         run_parallel_annotation(
             annotator_configs, output_path, image_files, max_workers
         )
+        voted_dir = None
         if ensemble_config and ensemble_config.enabled:
             voted_dir = run_voting_and_save(
                 ensemble_config,

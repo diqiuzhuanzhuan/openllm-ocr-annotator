@@ -64,7 +64,7 @@ class AnnotatorConfig:
     temperature: Optional[float] = 0
     enabled: bool = True
     prompt_path: Optional[str] = None
-    num_samples: Optional[str] = 1 # 如果要进行采样，则需要将num_samples调到1以上，同时将温度temperature调到0~1之间
+    num_samples: Optional[int] = 1  # To enable sampling, set num_samples > 1 and temperature between 0 and 1
 
 
     @classmethod
@@ -150,7 +150,7 @@ class TaskConfig:
     dataset: DatasetConfig
     max_workers: Optional[int] = 8
     max_files: int = -1  # -1 means no limit
-    num_samples: int=1 # 每个样本进行采样的次数
+    num_samples: int = 1  # Number of samples per image
 
     @classmethod
     def from_dict(cls, config: Dict) -> "TaskConfig":
@@ -229,7 +229,7 @@ class AnnotatorConfigManager:
         # Parse and validate ensemble config
         self._validate_config_keys(task_config["ensemble"], EnsembleConfig, "ensemble")
         ensemble = EnsembleConfig(
-            method=task_config["ensemble"]["method"],
+            method=EnsembleStrategy.from_str(task_config["ensemble"]["method"]),
             min_confidence=task_config["ensemble"]["min_confidence"],
             agreement_threshold=task_config["ensemble"]["agreement_threshold"],
             output_format=task_config["ensemble"].get("output_format", "json"),
@@ -323,5 +323,5 @@ if __name__ == "__main__":
 
     logger.info("\nAnnotator Weights:")
     for name, weight in annotator_weights.items():
-        # 混合使用 f-string 和 format
+        # f-string formatting
         logger.info(f"Model {name} has weight: {weight}")

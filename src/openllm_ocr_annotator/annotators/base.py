@@ -83,7 +83,7 @@ class BaseAnnotator(ABC):
         except Exception as e:
             raise ValueError(f"Error opening image {image_path}: {e}")
 
-    @staticmethod
+    @classmethod
     @abstractmethod
     def from_config(cls, config: AnnotatorConfig):
         """Create an annotator instance from a configuration dictionary."""

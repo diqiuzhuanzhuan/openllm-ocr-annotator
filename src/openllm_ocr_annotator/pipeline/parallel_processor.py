@@ -61,11 +61,7 @@ class ParallelProcessor:
                 ClaudeAnnotator,
             )
 
-            return ClaudeAnnotator(
-                api_key=config["api_key"],
-                model=config.get("model"),
-                base_url=config.get("base_url", None),
-            )
+            return ClaudeAnnotator.from_config(config=config)
         elif config.type == "gemini":
             from src.openllm_ocr_annotator.annotators.gemini_annotator import (
                 GeminiAnnotator,
@@ -73,7 +69,7 @@ class ParallelProcessor:
 
             return GeminiAnnotator.from_config(config=config)
         else:
-            raise ValueError(f"Unknown annotator type: {config['type']}")
+            raise ValueError(f"Unknown annotator type: {config.type}")
 
     def run_annotator_process(self, config: AnnotatorConfig, image_files: List[Path]):
         """Run single annotator process with fresh annotator instance."""

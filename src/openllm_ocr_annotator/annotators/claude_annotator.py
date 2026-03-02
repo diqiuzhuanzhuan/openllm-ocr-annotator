@@ -23,25 +23,51 @@ from typing import Optional, Dict
 from anthropic import Anthropic
 from openllm_ocr_annotator.annotators.base import BaseAnnotator
 from openllm_ocr_annotator.utils.prompt_manager import PromptManager
+from utils.prompt_manager import PromptManager
+from utils.retry import retry_with_backoff
+from utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 class ClaudeAnnotator(BaseAnnotator):
     """Anthropic Claude based image annotator."""
 
+    @classmethod
+    def from_config(cls, config: AnnotatorConfig) -> "ClaudeAnnotator":
+        return cls(
+            name=config.name,
+            api_key=config.api_key,
+            model=config.model,
+            task=config.task,
+            max_tokens=config.max_tokens,
+            temperature=config.temperature,
+            prompt_path=config.prompt_path,
+            n=config.num_samples,
+        )
+
     def __init__(
         self,
         api_key: Optional[str] = None,
+        name: str = "claude_annotator",
         model: str = "claude-3-opus-20240229",
         task: str = "vision_extraction",
         max_tokens: int = 1000,
+        temperature: Optional[float] = None,
+        prompt_path: Optional[str] = None,
+        n: Optional[int] = 1,
     ):
         """Initialize Claude annotator.
 
         Args:
             api_key: Anthropic API key. If None, uses ANTHROPIC_API_KEY env var
+            name: Annotator name used for output directory naming
             model: Model to use for vision tasks (e.g. claude-3-opus-20240229)
             task: Annotation task type ('ocr', 'layout', 'vision_extraction')
             max_tokens: Maximum tokens for response
+            temperature: Sampling temperature. None uses the model default
+            prompt_path: Path to prompt templates YAML file
+            n: Number of samples to generate per image
         """
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
@@ -50,11 +76,15 @@ class ClaudeAnnotator(BaseAnnotator):
             )
 
         self.client = Anthropic(api_key=self.api_key)
+        self.name = name
         self.model = model
         self.task = task
         self.max_tokens = max_tokens
-        self.prompt_manager = PromptManager()
+        self.temperature = temperature
+        self.prompt_manager = PromptManager(prompt_path=prompt_path)
+        self.n = n or 1
 
+    @retry_with_backoff(max_retries=3, initial_delay=2.0)
     def annotate(
         self, image_path: str, variables: Optional[Dict[str, str]] = None
     ) -> dict:
@@ -65,7 +95,7 @@ class ClaudeAnnotator(BaseAnnotator):
             variables: Optional variables for prompt template
 
         Returns:
-            dict: Annotation results
+            dict: Annotation results with a 'result' list of response strings
         """
         try:
             if not os.path.exists(image_path):
@@ -79,17 +109,14 @@ class ClaudeAnnotator(BaseAnnotator):
             # Encode image
             image_b64 = self._encode_image(image_path)
 
-            # Create API request
-            response = self.client.messages.create(
+            # Build API request kwargs
+            request_kwargs = dict(
                 model=self.model,
+                system=prompts["system"],
                 messages=[
                     {
                         "role": "user",
                         "content": [
-                            {
-                                "type": "text",
-                                "text": prompts["system"] + "\n" + prompts["user"],
-                            },
                             {
                                 "type": "image",
                                 "source": {
@@ -98,44 +125,27 @@ class ClaudeAnnotator(BaseAnnotator):
                                     "data": image_b64,
                                 },
                             },
+                            {"type": "text", "text": prompts["user"]},
                         ],
                     }
                 ],
                 max_tokens=self.max_tokens,
             )
+            if self.temperature is not None:
+                request_kwargs["temperature"] = self.temperature
+
+            # Collect n samples
+            results = []
+            for _ in range(self.n):
+                response = self.client.messages.create(**request_kwargs)
+                results.append(response.content[0].text)
 
             return {
-                "result": response.content[0].text,
+                "result": results,
                 "model": self.model,
                 "task": self.task,
-                "timestamp": response.created_at,
                 "image_path": image_path,
-                "usage": {
-                    "prompt_tokens": 0,  # Claude API doesn't provide token counts yet
-                    "completion_tokens": 0,
-                    "total_tokens": 0,
-                },
             }
 
         except Exception as e:
-            raise Exception(f"Error during Claude annotation: {str(e)}")
-
-
-if __name__ == "__main__":
-    # Test with different Claude models
-    models = [
-        "claude-3-opus-20240229",
-        "claude-3-sonnet-20240229",
-        "claude-3-haiku-20240229",
-    ]
-
-    for model in models:
-        annotator = ClaudeAnnotator(
-            api_key="sk-ant-api03-...",  # Replace with your API key
-            model=model,
-            task="vision_extraction",
-            max_tokens=1000,
-        )
-        result = annotator.annotate("test_image.jpg")
-        print(f"\nResults from {model}:")
-        print(result)
+            raise Exception(f"Error during Claude annotation of {image_path}: {str(e)}")

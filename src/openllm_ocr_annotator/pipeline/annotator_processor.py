@@ -45,11 +45,7 @@ def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
             ClaudeAnnotator,
         )
 
-        return ClaudeAnnotator(
-            api_key=config["api_key"],
-            model=config.get("model"),
-            base_url=config.get("base_url", None),
-        )
+        return ClaudeAnnotator.from_config(config=config)
     elif config.type == "gemini":
         from src.openllm_ocr_annotator.annotators.gemini_annotator import (
             GeminiAnnotator,
@@ -57,7 +53,7 @@ def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
 
         return GeminiAnnotator.from_config(config=config)
     else:
-        raise ValueError(f"Unknown annotator type: {config['type']}")
+        raise ValueError(f"Unknown annotator type: {config.type}")
 
 
 class AnnotatorProcessor:
@@ -112,8 +108,8 @@ class AnnotatorProcessor:
         return self.output_dir
 
     def _process_images(self, image_files: List[Path]):
-        """Process a list of images with the annotator."""
-        """
+        """Process a list of images with the annotator.
+
         Args:
             image_files (List[Path]): List of image file paths to process.
         """
@@ -123,8 +119,8 @@ class AnnotatorProcessor:
             self.process_single_image(str(img_path))
 
     def process_images(self, image_files: List[Path]):
-        """Asynchronously process a list of images with the annotator."""
-        """
+        """Process a list of images with the annotator using a thread pool.
+
         Args:
             image_files (List[Path]): List of image file paths to process.
         """

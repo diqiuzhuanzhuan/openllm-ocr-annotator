@@ -19,8 +19,8 @@
 # SOFTWARE.
 
 import argparse
-from src import AnnotatorConfigManager
-from src import run_batch_annotation
+from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
+from src.openllm_ocr_annotator.pipeline import run_batch_annotation
 
 argparser = argparse.ArgumentParser(description="OpenLLM OCR Annotator")
 
@@ -40,8 +40,6 @@ argparser.add_argument(
 
 if __name__ == "__main__":
     args = argparser.parse_args()
-    from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
-
     config_manager = AnnotatorConfigManager.from_file(args.config)
 
     annotator_configs = config_manager.get_enabled_annotators()
@@ -50,15 +48,6 @@ if __name__ == "__main__":
     ensemble_config = config_manager.get_ensemble_config()
     dataset_config = config_manager.get_dataset_config()
 
-    # Run batch annotation with weighted voting and create dataset
-    # Here you can add the logic to load the configs and start the application
-    # For example:
-    # from openllm_ocr_annotator.config import AnnotatorConfig, DatasetConfig, EnsembleConfig
-    # annotator_config = AnnotatorConfig(args.config)
-    # dataset_config = DatasetConfig(args.dataset)
-    # ensemble_config = EnsembleConfig(args.ensemble)
-    # ... (rest of your application logic)
-    task_config = config_manager.get_task_config()
     run_batch_annotation(
         task_config=task_config,
         dataset_config=dataset_config,
