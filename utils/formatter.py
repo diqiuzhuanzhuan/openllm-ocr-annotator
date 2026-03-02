@@ -76,8 +76,6 @@ def save_as_json(data, path):
 
 
 def save_as_jsonl(data, path):
-    import json
-
     with open(path, "w") as f:
         f.write(json.dumps(data) + "\n")
 
