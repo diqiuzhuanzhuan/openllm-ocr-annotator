@@ -22,8 +22,8 @@ from utils.logger import setup_logger
 from pathlib import Path
 import multiprocessing as mp
 from typing import List
-from src.openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
-from src.openllm_ocr_annotator.config import AnnotatorConfig
+from openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
+from openllm_ocr_annotator.config import AnnotatorConfig
 
 logger = setup_logger(__name__)
 

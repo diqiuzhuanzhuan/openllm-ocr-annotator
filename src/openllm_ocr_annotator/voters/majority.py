@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 
-from src.openllm_ocr_annotator.voters.base import BaseVoter
+from openllm_ocr_annotator.voters.base import BaseVoter
 from typing import List, Dict
 from collections import Counter
 

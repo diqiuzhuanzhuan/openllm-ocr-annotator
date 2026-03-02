@@ -22,7 +22,7 @@ import json
 from pathlib import Path
 import logging
 from typing import List, Dict
-from src.openllm_ocr_annotator.voters.base import BaseVoter
+from openllm_ocr_annotator.voters.base import BaseVoter
 
 logger = logging.getLogger(__name__)
 

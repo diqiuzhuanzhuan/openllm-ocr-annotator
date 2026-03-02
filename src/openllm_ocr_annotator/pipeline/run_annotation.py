@@ -24,12 +24,12 @@ from pathlib import Path
 from typing import Optional, Dict
 from tqdm import tqdm
 from typing import List
-from src.openllm_ocr_annotator.voters.majority import MajorityVoter
-from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
-from src.openllm_ocr_annotator.voters.manager import VotingManager
-from src.openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
-from src.openllm_ocr_annotator.config import AnnotatorConfig, TaskConfig, DatasetConfig
-from src.openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
+from openllm_ocr_annotator.voters.majority import MajorityVoter
+from openllm_ocr_annotator.voters.weighted import WeightedVoter
+from openllm_ocr_annotator.voters.manager import VotingManager
+from openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
+from openllm_ocr_annotator.config import AnnotatorConfig, TaskConfig, DatasetConfig
+from openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
 from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
 from utils.file_utils import get_image_files
 from utils.dataset_converter import convert_to_hf_dataset
