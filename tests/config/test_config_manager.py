@@ -23,7 +23,7 @@
 
 import pytest
 import yaml
-from src.openllm_ocr_annotator.config.config_manager import (
+from openllm_ocr_annotator.config.config_manager import (
     AnnotatorConfig,
     AnnotatorConfigManager,
     EnsembleStrategy,

@@ -25,7 +25,7 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from src.openllm_ocr_annotator.voters.manager import VotingManager
+from openllm_ocr_annotator.voters.manager import VotingManager
 
 
 def _write_json(path: Path, data: dict):

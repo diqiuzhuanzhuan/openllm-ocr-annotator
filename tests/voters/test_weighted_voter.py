@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import pytest
-from src.openllm_ocr_annotator.voters.weighted import WeightedVoter
+from openllm_ocr_annotator.voters.weighted import WeightedVoter
 
 
 def _make_annotation(fields):

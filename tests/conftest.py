@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 import yaml
-from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfig
+from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
 
 
 @pytest.fixture

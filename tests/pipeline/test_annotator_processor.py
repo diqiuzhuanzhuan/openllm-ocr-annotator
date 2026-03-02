@@ -25,8 +25,8 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfig
-from src.openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
+from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
+from openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
 
 
 def _make_config(**kwargs):

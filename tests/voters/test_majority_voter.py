@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from src.openllm_ocr_annotator.voters.majority import MajorityVoter
+from openllm_ocr_annotator.voters.majority import MajorityVoter
 
 
 class TestMajorityVoter:
