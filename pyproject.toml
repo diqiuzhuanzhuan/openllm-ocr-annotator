@@ -9,7 +9,7 @@ authors = [
   { name = "Loong Ma", email = "diqiuzhuanzhuan@gmail.com" }
 ]
 dependencies = [
-  "openai",
+  "openai>=1.0.0,<2.0.0",
   "requests",
   "pillow",
   "pyyaml",
@@ -23,7 +23,8 @@ dependencies = [
   "pandas",
   "pre-commit>=4.2.0",
   "streamlit>=1.45.1",
-  "litellm>=1.80.11",
+  "litellm>=1.67.0",
+  "httpx[socks]>=0.28.1",
 ]
 
 [project.urls]

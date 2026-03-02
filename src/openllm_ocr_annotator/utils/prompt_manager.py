@@ -36,12 +36,10 @@ class PromptManager:
 
     def __init__(self, prompt_path: Optional[str] = None):
         if prompt_path is None:
-            root_dir = Path(__file__).parent.parent
+            root_dir = Path(__file__).parent.parent.parent.parent
             prompt_path = (
                 root_dir
-                / "src"
-                / "openllm_ocr_annotator"
-                / "config"
+                / "examples"
                 / "prompt_templates.yaml"
             )
 

@@ -68,6 +68,12 @@ class ParallelProcessor:
             )
 
             return GeminiAnnotator.from_config(config=config)
+        elif config.type == "litellm":
+            from src.openllm_ocr_annotator.annotators.litellm_annotator import (
+                LiteLLMAnnotator,
+            )
+
+            return LiteLLMAnnotator.from_config(config=config)
         else:
             raise ValueError(f"Unknown annotator type: {config.type}")
 

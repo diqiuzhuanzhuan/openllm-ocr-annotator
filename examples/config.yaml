@@ -86,6 +86,44 @@ task:
       max_tokens: 1000
       prompt_path: "./examples/prompt_templates.yaml"
 
+    # LiteLLM — unified interface to 100+ LLM providers
+    # Uncomment and set the appropriate api_key / model to use
+    # - name: "claude-3-opus-litellm"
+    #   type: "litellm"
+    #   task: "vision_extraction"
+    #   model: "anthropic/claude-3-opus-20240229"  # provider/model-id
+    #   api_key: null                              # or set ANTHROPIC_API_KEY env var
+    #   weight: 1.0
+    #   output_format: json
+    #   max_tokens: 1000
+    #   temperature: null
+    #   enabled: false
+    #   prompt_path: "./examples/prompt_templates.yaml"
+
+    # - name: "mistral-large-litellm"
+    #   type: "litellm"
+    #   task: "vision_extraction"
+    #   model: "mistral/mistral-large-latest"
+    #   api_key: null                              # or set MISTRAL_API_KEY env var
+    #   weight: 0.8
+    #   output_format: json
+    #   max_tokens: 1000
+    #   temperature: null
+    #   enabled: false
+    #   prompt_path: "./examples/prompt_templates.yaml"
+
+    # - name: "groq-llama3-litellm"
+    #   type: "litellm"
+    #   task: "vision_extraction"
+    #   model: "groq/llama-3.2-90b-vision-preview"
+    #   api_key: null                              # or set GROQ_API_KEY env var
+    #   weight: 0.7
+    #   output_format: json
+    #   max_tokens: 1000
+    #   temperature: null
+    #   enabled: false
+    #   prompt_path: "./examples/prompt_templates.yaml"
+
   # Ensemble Configuration
   # -----------------------------------------------------------------------------
   ensemble:
