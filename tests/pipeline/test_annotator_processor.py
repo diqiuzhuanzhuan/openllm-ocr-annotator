@@ -48,7 +48,7 @@ def mock_processor(tmp_path):
     """Return an AnnotatorProcessor with its annotator replaced by a mock."""
     config = _make_config()
     with patch(
-        "src.openllm_ocr_annotator.pipeline.annotator_processor.create_annotator"
+        "openllm_ocr_annotator.pipeline.annotator_processor.create_annotator"
     ) as mock_create:
         mock_annotator = MagicMock()
         mock_annotator.name = "test_annotator"
