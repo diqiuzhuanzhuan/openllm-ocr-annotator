@@ -4,7 +4,7 @@
 
 import argparse
 from src.openllm_ocr_annotator.evaluators.field_evaluator import FieldEvaluator
-from utils.field_matcher import DateMatcher, CurrencyMatcher
+from openllm_ocr_annotator.utils.field_matcher import DateMatcher, CurrencyMatcher
 
 
 def main():

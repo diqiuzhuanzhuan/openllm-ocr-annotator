@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 from pathlib import Path
 import json
 from typing import List, Dict, Optional, Union
@@ -10,7 +10,7 @@ from tqdm import tqdm
 import time
 from openllm_ocr_annotator.config import AnnotatorConfig
 from openllm_ocr_annotator.annotators.base import BaseAnnotator
-from utils.formatter import parse_json_from_text
+from openllm_ocr_annotator.utils.formatter import parse_json_from_text
 
 logger = setup_logger(__name__)
 

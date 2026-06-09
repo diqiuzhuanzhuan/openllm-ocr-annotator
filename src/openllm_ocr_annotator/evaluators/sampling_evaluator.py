@@ -9,7 +9,7 @@ from collections import defaultdict
 import json
 from tqdm import tqdm
 from pathlib import Path
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

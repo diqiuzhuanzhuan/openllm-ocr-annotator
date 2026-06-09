@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 from typing import Dict, Optional
 import re
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

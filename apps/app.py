@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+from dotenv import load_dotenv
 from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
 from src.openllm_ocr_annotator.pipeline import run_batch_annotation
 
@@ -22,6 +23,7 @@ argparser.add_argument(
 )
 
 if __name__ == "__main__":
+    load_dotenv()
     args = argparser.parse_args()
     config_manager = AnnotatorConfigManager.from_file(args.config)
 

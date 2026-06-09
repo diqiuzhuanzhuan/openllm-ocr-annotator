@@ -1,5 +1,5 @@
 import json
-from utils.formatter import (
+from openllm_ocr_annotator.utils.formatter import (
     remove_comments,
     parse_json_from_text,
     save_as_json,

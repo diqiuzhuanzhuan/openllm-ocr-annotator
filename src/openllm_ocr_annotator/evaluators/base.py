@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict
 import json
-from utils.field_matcher import FieldMatcher, ExactMatcher
+from openllm_ocr_annotator.utils.field_matcher import FieldMatcher, ExactMatcher
 from typing import Optional
 
 

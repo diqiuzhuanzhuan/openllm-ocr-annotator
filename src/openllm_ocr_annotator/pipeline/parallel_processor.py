@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Loong Ma
 # SPDX-License-Identifier: MIT
 
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 from pathlib import Path
 import multiprocessing as mp
 from typing import List

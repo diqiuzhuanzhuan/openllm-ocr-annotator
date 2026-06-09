@@ -5,7 +5,7 @@ from dataclasses import dataclass, fields
 from typing import Dict, List, Optional
 import yaml
 from pathlib import Path
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 from enum import Enum
 
 logger = setup_logger(__name__)

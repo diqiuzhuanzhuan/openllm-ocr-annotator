@@ -4,7 +4,7 @@
 
 from typing import Dict, Optional
 from .base import BaseEvaluator
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 from collections import defaultdict
 
 

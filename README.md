@@ -36,6 +36,14 @@ source .venv/bin/activate
 uv pip install .
 ```
 
+Copy the environment template and configure the providers you use:
+
+```bash
+cp .env.example .env
+```
+
+`apps/app.py` loads `.env` automatically.
+
 ## 🚀 Quick Start
 
 You can run the annotator using:

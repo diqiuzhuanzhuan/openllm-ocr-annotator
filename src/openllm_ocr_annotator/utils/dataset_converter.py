@@ -7,7 +7,7 @@
 import json
 from pathlib import Path
 from typing import Dict, List
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 from datasets import Dataset, DatasetDict, Features, Value, Sequence, Image
 
 logger = setup_logger(__name__)

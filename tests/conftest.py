@@ -1,13 +1,5 @@
 # SPDX-FileCopyrightText: 2025 Loong Ma
 # SPDX-License-Identifier: MIT
-
-
-import sys
-from pathlib import Path
-
-# Add project root to sys.path so the top-level `utils` package is importable
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import pytest
 import yaml
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfig

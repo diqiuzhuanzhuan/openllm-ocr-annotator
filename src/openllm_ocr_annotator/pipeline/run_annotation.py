@@ -13,10 +13,14 @@ from openllm_ocr_annotator.voters.manager import VotingManager
 from openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
 from openllm_ocr_annotator.config import AnnotatorConfig, TaskConfig, DatasetConfig
 from openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
-from utils.formatter import save_as_json, save_as_jsonl, save_as_tsv
-from utils.file_utils import get_image_files
-from utils.dataset_converter import convert_to_hf_dataset
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.formatter import (
+    save_as_json,
+    save_as_jsonl,
+    save_as_tsv,
+)
+from openllm_ocr_annotator.utils.file_utils import get_image_files
+from openllm_ocr_annotator.utils.dataset_converter import convert_to_hf_dataset
+from openllm_ocr_annotator.utils.logger import setup_logger
 
 
 logging.basicConfig(level=logging.INFO)

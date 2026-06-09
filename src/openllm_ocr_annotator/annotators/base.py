@@ -8,7 +8,7 @@ import os
 from io import BytesIO
 from PIL import Image
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
-from utils.logger import setup_logger
+from openllm_ocr_annotator.utils.logger import setup_logger
 
 # allow dealing with large images
 # adjust the DecompressionBomb threshold
