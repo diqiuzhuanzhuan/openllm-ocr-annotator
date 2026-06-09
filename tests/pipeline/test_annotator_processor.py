@@ -24,7 +24,6 @@
 import json
 import pytest
 from unittest.mock import MagicMock, patch
-from pathlib import Path
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
 from openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
 
@@ -64,9 +63,7 @@ class TestParseAndValidateResult:
     def test_string_input_parsed_as_json(self, mock_processor, tmp_path):
         img = tmp_path / "img.jpg"
         img.touch()
-        result = mock_processor._parse_and_validate_result(
-            '{"fields": []}', img
-        )
+        result = mock_processor._parse_and_validate_result('{"fields": []}', img)
         assert result is not None
         assert "result" in result
 

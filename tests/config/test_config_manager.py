@@ -22,7 +22,6 @@
 
 
 import pytest
-import yaml
 from openllm_ocr_annotator.config.config_manager import (
     AnnotatorConfig,
     AnnotatorConfigManager,

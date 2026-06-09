@@ -82,7 +82,9 @@ class ParallelProcessor:
         try:
             # Create new annotator instance in this process
             processor = AnnotatorProcessor(
-                annotator_config=config, output_dir=self.output_dir, max_workers=self.max_workers
+                annotator_config=config,
+                output_dir=self.output_dir,
+                max_workers=self.max_workers,
             )
             processor.process_images(image_files=image_files)
 

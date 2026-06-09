@@ -1,5 +1,4 @@
 import json
-import pytest
 from utils.formatter import (
     remove_comments,
     parse_json_from_text,

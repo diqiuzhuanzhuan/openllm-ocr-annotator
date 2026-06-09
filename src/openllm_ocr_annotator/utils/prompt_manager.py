@@ -37,11 +37,7 @@ class PromptManager:
     def __init__(self, prompt_path: Optional[str] = None):
         if prompt_path is None:
             root_dir = Path(__file__).parent.parent.parent.parent
-            prompt_path = (
-                root_dir
-                / "examples"
-                / "prompt_templates.yaml"
-            )
+            prompt_path = root_dir / "examples" / "prompt_templates.yaml"
 
         self.config_path = prompt_path
         self.load_config()

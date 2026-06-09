@@ -41,7 +41,7 @@ class VotingManager:
         self.voter = voter
 
     def collect_annotations(
-        self, results_dir: Path, image_stem: str,num_samples:int=1
+        self, results_dir: Path, image_stem: str, num_samples: int = 1
     ) -> Dict[str, Dict]:
         """Collect existing annotation results for an image.
 
@@ -57,8 +57,15 @@ class VotingManager:
             annotator_name = annotator_info["name"]
             model_version = annotator_info.get("model", "default")
             if num_samples > 1:
-                annotator_dir = [results_dir/annotator_name/model_version/"sampling"/f"sample_{str(i)}" for i in range(num_samples)]
-                result_paths = [_d/ f"{image_stem}.json" for _d in annotator_dir]
+                annotator_dir = [
+                    results_dir
+                    / annotator_name
+                    / model_version
+                    / "sampling"
+                    / f"sample_{str(i)}"
+                    for i in range(num_samples)
+                ]
+                result_paths = [_d / f"{image_stem}.json" for _d in annotator_dir]
 
             else:
                 annotator_dir = results_dir / annotator_name / model_version
@@ -66,13 +73,15 @@ class VotingManager:
 
             try:
                 if num_samples > 1:
-                    for i,result_path in enumerate(result_paths):
+                    for i, result_path in enumerate(result_paths):
                         result_key = f"{annotator_name}/{model_version}/sample_{str(i)}"
                         if result_path.exists():
                             with open(result_path, "r") as f:
                                 results[result_key] = json.load(f)
                         else:
-                            logger.warning(f"No annotation result found at: {result_path}")
+                            logger.warning(
+                                f"No annotation result found at: {result_path}"
+                            )
                 else:
                     if result_path.exists():
                         with open(result_path, "r") as f:
@@ -91,7 +100,9 @@ class VotingManager:
 
         return results
 
-    def get_voted_result(self, image_path: Path, output_dir: Path, num_samples: int = 1) -> Dict:
+    def get_voted_result(
+        self, image_path: Path, output_dir: Path, num_samples: int = 1
+    ) -> Dict:
         """Get or compute voted result for a single image based on individual annotations.
 
         Args:
@@ -111,7 +122,9 @@ class VotingManager:
         #        return json.load(f)
 
         # Collect existing annotations
-        results = self.collect_annotations(results_dir=output_dir, image_stem=image_path.stem,num_samples=num_samples)
+        results = self.collect_annotations(
+            results_dir=output_dir, image_stem=image_path.stem, num_samples=num_samples
+        )
         if not results:
             raise ValueError(f"No valid annotations found for {image_path.name}")
 
@@ -120,7 +133,7 @@ class VotingManager:
         annotations = list(results.values())
 
         voted_result = {
-            "result": self.voter.vote(annotations, annotator_ids,num_samples),
+            "result": self.voter.vote(annotations, annotator_ids, num_samples),
             "metadata": {
                 "annotators": annotator_ids,  # List of annotator_name/model_version used
             },

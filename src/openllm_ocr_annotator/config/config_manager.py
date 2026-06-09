@@ -64,8 +64,9 @@ class AnnotatorConfig:
     temperature: Optional[float] = 0
     enabled: bool = True
     prompt_path: Optional[str] = None
-    num_samples: Optional[int] = 1  # To enable sampling, set num_samples > 1 and temperature between 0 and 1
-
+    num_samples: Optional[int] = (
+        1  # To enable sampling, set num_samples > 1 and temperature between 0 and 1
+    )
 
     @classmethod
     def from_dict(cls, config: Dict) -> "AnnotatorConfig":
@@ -130,7 +131,8 @@ class DatasetConfig:
             version=config.get("version", "1.0"),
             description=config.get("description", ""),
             format=config.get("format", "json"),
-            output_dir = Path(config.get("output_dir", "./datasets")) / Path(config.get("name", "default_dataset")),
+            output_dir=Path(config.get("output_dir", "./datasets"))
+            / Path(config.get("name", "default_dataset")),
             split_ratio=config.get("split_ratio", 0.8),
             num_samples=config.get("num_samples", -1),
             enabled=config.get("enabled", True),

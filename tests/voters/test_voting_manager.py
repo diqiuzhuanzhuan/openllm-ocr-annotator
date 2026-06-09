@@ -23,7 +23,7 @@
 
 import json
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from pathlib import Path
 from openllm_ocr_annotator.voters.manager import VotingManager
 
@@ -45,7 +45,9 @@ class TestVotingManagerCollectAnnotations:
         _write_json(ann_dir / "image001.json", result)
 
         manager = VotingManager(
-            annotator_infos=[{"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}],
+            annotator_infos=[
+                {"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}
+            ],
             voter=self.voter,
         )
         results = manager.collect_annotations(
@@ -56,7 +58,9 @@ class TestVotingManagerCollectAnnotations:
 
     def test_missing_file_skipped(self, tmp_path):
         manager = VotingManager(
-            annotator_infos=[{"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}],
+            annotator_infos=[
+                {"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}
+            ],
             voter=self.voter,
         )
         results = manager.collect_annotations(
@@ -71,7 +75,9 @@ class TestVotingManagerCollectAnnotations:
             _write_json(sample_dir / "image001.json", {"result": {}, "sample": i})
 
         manager = VotingManager(
-            annotator_infos=[{"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}],
+            annotator_infos=[
+                {"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}
+            ],
             voter=self.voter,
         )
         results = manager.collect_annotations(
@@ -87,14 +93,20 @@ class TestVotingManagerGetVotedResult:
         # Write fixture result file
         ann_dir = tmp_path / "annotator_a" / "gpt-4"
         ann_dir.mkdir(parents=True)
-        annotation = {"result": {"fields": [{"field_name": "k", "value": "v", "confidence": 1.0}]}}
+        annotation = {
+            "result": {"fields": [{"field_name": "k", "value": "v", "confidence": 1.0}]}
+        }
         _write_json(ann_dir / "image001.json", annotation)
 
         mock_voter = MagicMock()
-        mock_voter.vote.return_value = {"fields": [{"field_name": "k", "value": "v", "confidence": 1.0}]}
+        mock_voter.vote.return_value = {
+            "fields": [{"field_name": "k", "value": "v", "confidence": 1.0}]
+        }
 
         manager = VotingManager(
-            annotator_infos=[{"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}],
+            annotator_infos=[
+                {"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}
+            ],
             voter=mock_voter,
         )
         img_path = Path("image001.jpg")
@@ -106,8 +118,12 @@ class TestVotingManagerGetVotedResult:
     def test_no_annotations_raises(self, tmp_path):
         mock_voter = MagicMock()
         manager = VotingManager(
-            annotator_infos=[{"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}],
+            annotator_infos=[
+                {"name": "annotator_a", "model": "gpt-4", "results_dir": tmp_path}
+            ],
             voter=mock_voter,
         )
         with pytest.raises(ValueError, match="No valid annotations"):
-            manager.get_voted_result(Path("missing.jpg"), output_dir=tmp_path, num_samples=1)
+            manager.get_voted_result(
+                Path("missing.jpg"), output_dir=tmp_path, num_samples=1
+            )

@@ -1,4 +1,3 @@
-import pytest
 from utils.field_matcher import (
     ExactMatcher,
     CaseInsensitiveMatcher,

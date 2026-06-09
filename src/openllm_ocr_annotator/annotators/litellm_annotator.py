@@ -154,9 +154,7 @@ class LiteLLMAnnotator(BaseAnnotator):
                     "content": [
                         {
                             "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_b64}"
-                            },
+                            "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"},
                         },
                         {"type": "text", "text": prompts["user"]},
                     ],
@@ -176,6 +174,7 @@ class LiteLLMAnnotator(BaseAnnotator):
             # Loop n times — safer than relying on provider-specific n= support
             results = []
             import litellm  # noqa: PLC0415 — lazy import avoids openai version conflicts
+
             for _ in range(self.n):
                 response = litellm.completion(**request_kwargs)
                 results.append(response.choices[0].message.content)

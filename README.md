@@ -104,6 +104,21 @@ streamlit run apps/streamlit_viewer.py
 ```
 You will get the accuracy of the annotations, and you can also view the annotations in a web-based UI.
 
+## Development
+
+Install [just](https://github.com/casey/just) and use the project recipes:
+
+```bash
+just install       # Install project and development dependencies
+just test          # Run all tests
+just test -k voter # Pass additional arguments to pytest
+just lint          # Run Ruff lint checks
+just fmt           # Format Python files
+just fmt-check     # Check formatting without modifying files
+just check         # Run lint, format checks, and tests
+just pre-commit    # Run all pre-commit hooks
+```
+
 🔧 Coming soon: Web-based UI / Demo via GitHub Actions page.
 
 🤖 Supported Models

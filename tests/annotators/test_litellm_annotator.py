@@ -108,7 +108,9 @@ class TestAnnotate:
     @pytest.fixture
     def annotator(self):
         config = _make_config()
-        with patch("src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"):
+        with patch(
+            "src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"
+        ):
             return LiteLLMAnnotator.from_config(config)
 
     def test_annotate_returns_result_list(self, annotator, mock_image):
@@ -129,7 +131,9 @@ class TestAnnotate:
 
     def test_annotate_multiple_samples(self, mock_image):
         config = _make_config(num_samples=3)
-        with patch("src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"):
+        with patch(
+            "src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"
+        ):
             annotator = LiteLLMAnnotator.from_config(config)
 
         annotator.prompt_manager = MagicMock(
@@ -153,7 +157,9 @@ class TestAnnotate:
 class TestApiKeyEnvVar:
     def test_api_key_sets_env_var_for_known_provider(self, monkeypatch):
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        with patch("src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"):
+        with patch(
+            "src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"
+        ):
             LiteLLMAnnotator(
                 api_key="my-secret-key",
                 model="anthropic/claude-3-opus-20240229",
@@ -162,7 +168,9 @@ class TestApiKeyEnvVar:
 
     def test_api_key_sets_groq_env_var(self, monkeypatch):
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
-        with patch("src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"):
+        with patch(
+            "src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"
+        ):
             LiteLLMAnnotator(
                 api_key="groq-key",
                 model="groq/llama-3.2-90b-vision-preview",
