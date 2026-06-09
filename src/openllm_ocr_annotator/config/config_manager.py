@@ -98,10 +98,10 @@ class DatasetConfig:
     """Configuration for dataset generation"""
 
     name: str = "default_dataset"
-    version: str = 1.0
+    version: str = "1.0"
     description: str = ""
     format: str = "json"
-    output_dir: str = "./datasets"
+    output_dir: str|Path = "./datasets"
     split_ratio: float = 0.9
     num_samples: int = -1  # -1 means use all available samples
     enabled: bool = True

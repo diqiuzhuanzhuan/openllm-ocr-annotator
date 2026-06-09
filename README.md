@@ -110,6 +110,9 @@ Install [just](https://github.com/casey/just) and use the project recipes:
 
 ```bash
 just install       # Install project and development dependencies
+just build         # Build source and wheel distributions
+just docs          # Build the Zensical documentation site
+just docs-serve    # Preview documentation with live reload
 just test          # Run all tests
 just test -k voter # Pass additional arguments to pytest
 just lint          # Run Ruff lint checks

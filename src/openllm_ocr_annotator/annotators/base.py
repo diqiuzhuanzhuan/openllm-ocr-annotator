@@ -7,12 +7,10 @@ import base64
 import os
 from io import BytesIO
 from PIL import Image
-from PIL import ImageFile
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
 from utils.logger import setup_logger
 
 # allow dealing with large images
-ImageFile.LOAD_TRUNCATED_IMAGES = True
 # adjust the DecompressionBomb threshold
 Image.MAX_IMAGE_PIXELS = 178956970  # set the same limit as the max pixels size
 
@@ -22,7 +20,7 @@ logger = setup_logger(__name__)
 class BaseAnnotator(ABC):
     def _handle_large_image(
         self, image_path: str, max_pixels: int = 178956970
-    ) -> Image:
+    ) -> Image.Image:
         """Safely open and handle potentially large images.
 
         Args:

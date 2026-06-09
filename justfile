@@ -9,6 +9,18 @@ default:
 install:
     uv sync --group dev
 
+# Build source and wheel distributions.
+build:
+    uv build
+
+# Build the documentation site.
+docs:
+    uv run zensical build
+
+# Preview the documentation site with live reload.
+docs-serve:
+    uv run zensical serve
+
 # Run the test suite. Extra pytest arguments are supported.
 test *args:
     uv run pytest {{args}}

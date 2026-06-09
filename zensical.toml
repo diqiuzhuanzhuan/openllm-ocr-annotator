@@ -1,0 +1,24 @@
+[project]
+site_name = "OpenLLM OCR Annotator"
+site_description = "Generate, ensemble, and evaluate OCR document annotations with multimodal large language models."
+site_author = "Loong Ma"
+site_url = "https://diqiuzhuanzhuan.github.io/openllm-ocr-annotator/"
+repo_url = "https://github.com/diqiuzhuanzhuan/openllm-ocr-annotator"
+repo_name = "diqiuzhuanzhuan/openllm-ocr-annotator"
+docs_dir = "docs"
+site_dir = "site"
+copyright = "Copyright &copy; 2025 Loong Ma"
+nav = [
+  { "Home" = "index.md" },
+  { "Architecture" = "architecture.md" },
+  { "GitHub" = "https://github.com/diqiuzhuanzhuan/openllm-ocr-annotator" },
+]
+
+[project.theme]
+language = "en"
+features = [
+  "navigation.instant",
+  "navigation.tracking",
+  "navigation.sections",
+  "content.code.copy",
+]
