@@ -176,3 +176,26 @@ class TestApiKeyEnvVar:
                 model="groq/llama-3.2-90b-vision-preview",
             )
         assert os.environ.get("GROQ_API_KEY") == "groq-key"
+
+
+class TestApiUrlEnvVar:
+    def test_provider_api_url(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://anthropic.example/v1")
+        with patch(
+            "src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"
+        ):
+            annotator = LiteLLMAnnotator(
+                model="anthropic/claude-3-opus-20240229",
+            )
+        assert annotator.base_url == "https://anthropic.example/v1"
+
+    def test_explicit_url_has_priority(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://env.example/v1")
+        with patch(
+            "src.openllm_ocr_annotator.annotators.litellm_annotator.PromptManager"
+        ):
+            annotator = LiteLLMAnnotator(
+                model="anthropic/claude-3-opus-20240229",
+                base_url="https://config.example/v1",
+            )
+        assert annotator.base_url == "https://config.example/v1"

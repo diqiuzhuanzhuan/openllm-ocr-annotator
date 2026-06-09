@@ -73,7 +73,7 @@ class GeminiAnnotator(BaseAnnotator):
                 "OpenAI API key must be provided or set in OPENAI_API_KEY environment variable"
             )
 
-        self.base_url = base_url
+        self.base_url = base_url or os.getenv("GOOGLE_GEMINI_BASE_URL")
         if self.base_url:
             logger.warning(
                 f"Warning: Using custom OpenAI API endpoint: {self.base_url}"

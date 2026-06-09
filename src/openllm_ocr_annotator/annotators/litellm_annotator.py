@@ -36,7 +36,17 @@ _PROVIDER_ENV_VARS = {
     "mistral": "MISTRAL_API_KEY",
     "groq": "GROQ_API_KEY",
     "cohere": "COHERE_API_KEY",
-    "together_ai": "TOGETHERAI_API_KEY",
+    "together_ai": "TOGETHER_API_KEY",
+}
+
+_PROVIDER_URL_ENV_VARS = {
+    "openai": "OPENAI_BASE_URL",
+    "anthropic": "ANTHROPIC_BASE_URL",
+    "gemini": "GEMINI_API_BASE",
+    "mistral": "MISTRAL_API_BASE",
+    "groq": "GROQ_BASE_URL",
+    "cohere": "COHERE_API_BASE",
+    "together_ai": "TOGETHER_BASE_URL",
 }
 
 
@@ -87,13 +97,16 @@ class LiteLLMAnnotator(BaseAnnotator):
         self.task = task
         self.max_tokens = max_tokens
         self.temperature = temperature
-        self.base_url = base_url
+        provider = self._get_provider()
+        provider_url_env = _PROVIDER_URL_ENV_VARS.get(provider)
+        self.base_url = base_url or (
+            os.getenv(provider_url_env) if provider_url_env else None
+        )
         self.prompt_manager = PromptManager(prompt_path=prompt_path)
         self.n = n or 1
 
         # Set the provider-specific env var if api_key was supplied
         if api_key:
-            provider = self._get_provider()
             env_var = _PROVIDER_ENV_VARS.get(provider)
             if env_var:
                 os.environ[env_var] = api_key

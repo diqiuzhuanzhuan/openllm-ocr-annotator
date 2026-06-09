@@ -42,6 +42,7 @@ class ClaudeAnnotator(BaseAnnotator):
             task=config.task,
             max_tokens=config.max_tokens,
             temperature=config.temperature,
+            base_url=config.base_url,
             prompt_path=config.prompt_path,
             n=config.num_samples,
         )
@@ -54,6 +55,7 @@ class ClaudeAnnotator(BaseAnnotator):
         task: str = "vision_extraction",
         max_tokens: int = 1000,
         temperature: Optional[float] = None,
+        base_url: Optional[str] = None,
         prompt_path: Optional[str] = None,
         n: Optional[int] = 1,
     ):
@@ -66,6 +68,7 @@ class ClaudeAnnotator(BaseAnnotator):
             task: Annotation task type ('ocr', 'layout', 'vision_extraction')
             max_tokens: Maximum tokens for response
             temperature: Sampling temperature. None uses the model default
+            base_url: Optional custom API base URL
             prompt_path: Path to prompt templates YAML file
             n: Number of samples to generate per image
         """
@@ -75,7 +78,8 @@ class ClaudeAnnotator(BaseAnnotator):
                 "Anthropic API key must be provided or set in ANTHROPIC_API_KEY environment variable"
             )
 
-        self.client = Anthropic(api_key=self.api_key)
+        self.base_url = base_url or os.getenv("ANTHROPIC_BASE_URL")
+        self.client = Anthropic(api_key=self.api_key, base_url=self.base_url)
         self.name = name
         self.model = model
         self.task = task
