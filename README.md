@@ -25,15 +25,10 @@ This project requires **Python 3.13.2**. We recommend using [uv](https://github.
 git clone https://github.com/diqiuzhuanzhuan/openllm-ocr-annotator.git
 cd openllm-ocr-annotator
 ```
-### 2. Create and activate a virtual environment
+### 2. Create the environment and install dependencies
 
 ```bash
-uv venv .venv
-source .venv/bin/activate
-```
-### 3. Install dependencies
-```bash
-uv pip install .
+uv sync --group dev
 ```
 
 Copy the environment template and configure the providers you use:
