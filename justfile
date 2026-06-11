@@ -1,4 +1,4 @@
-set shell := ["zsh", "-cu"]
+set shell := ["bash", "-cu"]
 
 export UV_CACHE_DIR := ".uv-cache"
 
