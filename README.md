@@ -127,13 +127,14 @@ just pre-commit    # Run all pre-commit hooks
 
 🔧 Coming soon: Web-based UI / Demo via GitHub Actions page.
 
-🤖 Supported Models
+🤖 Supported Model Providers
 - [x] OpenAI (GPT-4 / GPT-3.5)
 - [ ] Claude (Anthropic, Comming soon)
 - [x] Gemini (Google)
 - [ ] Qwen (Alibaba)
 - [ ] Mistral (Coming soon)
 - [ ] Grok (xAI / Elon Musk)
+- [x] Litellm
 
 📂 Output Formats
 - [x] JSON

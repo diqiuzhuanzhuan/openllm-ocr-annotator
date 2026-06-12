@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List
 from openllm_ocr_annotator.utils.logger import setup_logger
 from datasets import Dataset, DatasetDict, Features, Value, Sequence, Image
+from datasets import List as HFList
 
 logger = setup_logger(__name__)
 
@@ -64,7 +65,7 @@ def create_hf_dataset(
             "image": Image(),
             "image_path": Value("string"),
             "filename": Value("string"),
-            "fields": Sequence(
+            "fields": HFList(
                 {
                     "field_name": Value("string"),
                     "value": Value("string"),
@@ -98,6 +99,7 @@ def create_hf_dataset(
             "metadata": {
                 "task_id": result["metadata"]["task_id"],
                 "timestamp": result["metadata"]["timestamp"],
+                "annotators": result["metadata"].get("annotators", []),
             },
         }
         dataset_dicts.append(dataset_dict)

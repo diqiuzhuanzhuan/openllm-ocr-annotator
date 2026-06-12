@@ -94,11 +94,13 @@ def run_voting_and_save(
             result = voting_manager.get_voted_result(
                 image_path=img_path, output_dir=output_path, num_samples=num_samples
             )
-            result["metadata"] = {
-                "task_id": task_id,
-                "image_path": str(img_path),
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            }
+            result.setdefault("metadata", {}).update(
+                {
+                    "task_id": task_id,
+                    "image_path": str(img_path),
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            )
             if "json" in format:
                 save_as_json(result, voted_dir / f"{img_path.stem}.json")
             if "jsonl" in format:
