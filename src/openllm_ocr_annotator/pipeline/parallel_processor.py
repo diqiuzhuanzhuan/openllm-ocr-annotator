@@ -34,25 +34,25 @@ class ParallelProcessor:
     def create_annotator(config: AnnotatorConfig):
         """Create a new annotator instance from config."""
         if config.type == "openai":
-            from src.openllm_ocr_annotator.annotators.openai_annotator import (
+            from openllm_ocr_annotator.annotators.openai_annotator import (
                 OpenAIAnnotator,
             )
 
             return OpenAIAnnotator.from_config(config=config)
         elif config.type == "claude":
-            from src.openllm_ocr_annotator.annotators.claude_annotator import (
+            from openllm_ocr_annotator.annotators.claude_annotator import (
                 ClaudeAnnotator,
             )
 
             return ClaudeAnnotator.from_config(config=config)
         elif config.type == "gemini":
-            from src.openllm_ocr_annotator.annotators.gemini_annotator import (
+            from openllm_ocr_annotator.annotators.gemini_annotator import (
                 GeminiAnnotator,
             )
 
             return GeminiAnnotator.from_config(config=config)
         elif config.type == "litellm":
-            from src.openllm_ocr_annotator.annotators.litellm_annotator import (
+            from openllm_ocr_annotator.annotators.litellm_annotator import (
                 LiteLLMAnnotator,
             )
 

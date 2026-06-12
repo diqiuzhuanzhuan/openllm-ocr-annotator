@@ -14,7 +14,7 @@ _litellm_stub = MagicMock()
 sys.modules.setdefault("litellm", _litellm_stub)
 
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfig  # noqa: E402
-from src.openllm_ocr_annotator.annotators.litellm_annotator import LiteLLMAnnotator  # noqa: E402
+from openllm_ocr_annotator.annotators.litellm_annotator import LiteLLMAnnotator  # noqa: E402
 
 
 def _make_config(**kwargs):

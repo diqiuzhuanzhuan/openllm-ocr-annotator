@@ -196,7 +196,7 @@ def run_batch_annotation(
 
 
 if __name__ == "__main__":
-    from src.openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
+    from openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
 
     config_manager = AnnotatorConfigManager.from_file("examples/config.yaml")
     annotator_configs = config_manager.get_enabled_annotators()

@@ -4,7 +4,7 @@
 # apps/evaluate_sampling.py
 
 import argparse
-from src.openllm_ocr_annotator.evaluators.sampling_evaluator import SamplingEvaluator
+from openllm_ocr_annotator.evaluators.sampling_evaluator import SamplingEvaluator
 from openllm_ocr_annotator.utils.field_matcher import DateMatcher, CurrencyMatcher
 
 
