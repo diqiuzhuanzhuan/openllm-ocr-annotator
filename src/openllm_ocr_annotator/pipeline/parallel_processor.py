@@ -57,6 +57,10 @@ class ParallelProcessor:
             )
 
             return LiteLLMAnnotator.from_config(config=config)
+        elif config.type == "grok":
+            from openllm_ocr_annotator.annotators.grok_annotator import GrokAnnotator
+
+            return GrokAnnotator.from_config(config=config)
         else:
             raise ValueError(f"Unknown annotator type: {config.type}")
 

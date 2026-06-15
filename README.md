@@ -133,7 +133,7 @@ just pre-commit    # Run all pre-commit hooks
 - [x] Gemini (Google)
 - [ ] Qwen (Alibaba)
 - [ ] Mistral (Coming soon)
-- [ ] Grok (xAI / Elon Musk)
+- [x] Grok (xAI / Elon Musk)
 - [x] Litellm
 
 📂 Output Formats
