@@ -129,7 +129,7 @@ just pre-commit    # Run all pre-commit hooks
 
 🤖 Supported Model Providers
 - [x] OpenAI (GPT-4 / GPT-3.5)
-- [ ] Claude (Anthropic, Comming soon)
+- [x] Claude (Anthropic)
 - [x] Gemini (Google)
 - [x] Qwen (Alibaba)
 - [x] Mistral
