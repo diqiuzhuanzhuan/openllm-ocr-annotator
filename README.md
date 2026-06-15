@@ -131,8 +131,8 @@ just pre-commit    # Run all pre-commit hooks
 - [x] OpenAI (GPT-4 / GPT-3.5)
 - [ ] Claude (Anthropic, Comming soon)
 - [x] Gemini (Google)
-- [ ] Qwen (Alibaba)
-- [ ] Mistral (Coming soon)
+- [x] Qwen (Alibaba)
+- [x] Mistral
 - [x] Grok (xAI / Elon Musk)
 - [x] Litellm
 

@@ -45,6 +45,16 @@ def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
         from openllm_ocr_annotator.annotators.grok_annotator import GrokAnnotator
 
         return GrokAnnotator.from_config(config=config)
+    elif config.type == "mistral":
+        from openllm_ocr_annotator.annotators.mistral_annotator import (
+            MistralAnnotator,
+        )
+
+        return MistralAnnotator.from_config(config=config)
+    elif config.type in ("qwen", "qwen2.5"):
+        from openllm_ocr_annotator.annotators.qwen_annotator import QwenAnnotator
+
+        return QwenAnnotator.from_config(config=config)
     else:
         raise ValueError(f"Unknown annotator type: {config.type}")
 
