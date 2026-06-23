@@ -1,5 +1,7 @@
 # OpenLLM OCR Annotator
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 **OpenLLM OCR Annotator** is a multimodal annotation tool designed to assist with OCR (Optical Character Recognition) labeling using multiple Large Language Model (LLM) APIs. It supports generating annotations in various formats, making it easier to build datasets for tasks involving text recognition and understanding in images.
 
 ## ✨ Features
