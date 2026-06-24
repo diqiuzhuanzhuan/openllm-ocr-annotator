@@ -39,3 +39,23 @@ def test_create_hf_dataset_encodes_fields_as_list_of_records(tmp_path):
         }
     ]
     assert row["metadata"]["annotators"] == ["annotator/model"]
+
+
+def test_create_hf_dataset_handles_tiny_split(tmp_path):
+    image_path = tmp_path / "image.png"
+    image_path.touch()
+    result = {
+        "result": {"fields": []},
+        "metadata": {
+            "image_path": str(image_path),
+            "filename": "image.json",
+            "task_id": "test_task",
+            "timestamp": "2026-06-12 14:00:36",
+            "annotators": ["annotator/model"],
+        },
+    }
+
+    dataset = create_hf_dataset([result], {"train": 0.9, "test": 0.1})
+
+    assert len(dataset["train"]) == 1
+    assert "test" not in dataset or len(dataset["test"]) == 0

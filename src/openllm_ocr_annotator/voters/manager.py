@@ -6,8 +6,17 @@ from pathlib import Path
 import logging
 from typing import List, Dict
 from openllm_ocr_annotator.voters.base import BaseVoter
+from openllm_ocr_annotator.utils.formatter import parse_json_from_text
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_annotation_result(result: Dict) -> Dict:
+    if isinstance(result.get("result"), str):
+        parsed = parse_json_from_text(result["result"])
+        if parsed:
+            result["result"] = parsed
+    return result
 
 
 class VotingManager:
@@ -60,7 +69,7 @@ class VotingManager:
                         result_key = f"{annotator_name}/{model_version}/sample_{str(i)}"
                         if result_path.exists():
                             with open(result_path, "r") as f:
-                                results[result_key] = json.load(f)
+                                results[result_key] = _normalize_annotation_result(json.load(f))
                         else:
                             logger.warning(
                                 f"No annotation result found at: {result_path}"
@@ -69,7 +78,7 @@ class VotingManager:
                     if result_path.exists():
                         with open(result_path, "r") as f:
                             result_key = f"{annotator_name}/{model_version}"
-                            results[result_key] = json.load(f)
+                            results[result_key] = _normalize_annotation_result(json.load(f))
                     else:
                         logger.warning(f"No annotation result found at: {result_path}")
             except Exception as e:

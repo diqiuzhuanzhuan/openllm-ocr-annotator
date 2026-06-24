@@ -14,116 +14,40 @@ task:
   # Annotator Configurations
   # -----------------------------------------------------------------------------
   annotators:
-    # GPT-4 Vision Preview
-    - name: "gpt-4-vision-preview"     # Primary vision model
-      type: openai                     # Api format: openai like if set "openai"
-      task: "vision_extraction"        # Prompt template key
-      model: "gpt-4-vision-preview"
-      weight: 1.0                      # Highest weight in ensemble
-      output_format: json
-      max_tokens: 1000
-      temperature: null                # Default to deterministic output
-      enabled: true
-      prompt_path: "./examples/prompt_templates.yaml"
-
     # GPT-4.1 Vision Model
-    - name: "gpt-4.1-2025-04-14"
-      type: openai
+    - name: "gpt-5"
+      type: curator
       task: "vision_extraction"
-      model: "gpt-4.1-2025-04-14"
+      provider:
+        model_name: "openai/gpt-5"
+        backend: "litellm"
+        backend_params:
+          require_all_responses: False
+          max_tokens_per_minute: 100_000_000
+        generation_params:
+          max_tokens: 4096
       weight: 1.0
       output_format: json
-      max_tokens: 1000
-      temperature: null
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
 
-    # ChatGPT-4 Latest
-    - name: "chatgpt-4o-latest"
-      type: openai
+    - name: "gpt-5.5"
+      type: curator
       task: "vision_extraction"
-      model: "chatgpt-4o-latest"
-      weight: 0.9
-      output_format: json
-      max_tokens: 1000
-      temperature: null
-      enabled: true
-      prompt_path: "./examples/prompt_templates.yaml"
-
-    # GPT-4 2024 Model
-    - name: "gpt-4o-2024-11-20"
-      type: openai
-      task: "vision_extraction"
-      model: "gpt-4o-2024-11-20"
-      weight: 0.85
-      output_format: json
-      max_tokens: 1000
-      temperature: null
-      enabled: true
-      prompt_path: "./examples/prompt_templates.yaml"
-
-
-    # Gemini 2.0 Flash
-    - name: "gemini-2.0-flash"
-      type: openai
-      task: "vision_extraction"
-      model: "gemini-2.0-flash"
+      provider:
+        model_name: "openai/gpt-5.5"
+        backend: "litellm"
+        backend_params:
+          require_all_responses: False
+          max_tokens_per_minute: 100_000_000
+        generation_params:
+          max_tokens: 4096
       weight: 1.0
       output_format: json
-      max_tokens: 1000
-      temperature: null
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
 
-    # Local Qwen Model
-    - name: "qwen-2.5vl"
-      type: "qwen2.5"
-      task: "vision_extraction"
-      enabled: false                   # Disabled by default
-      base_url: "http://xxxxx.api/v1"
-      weight: 0.5
-      output_format: json
-      max_tokens: 1000
-      prompt_path: "./examples/prompt_templates.yaml"
-
-    # LiteLLM — unified interface to 100+ LLM providers
-    # Uncomment and set the appropriate api_key / model to use
-    # - name: "claude-3-opus-litellm"
-    #   type: "litellm"
-    #   task: "vision_extraction"
-    #   model: "anthropic/claude-3-opus-20240229"  # provider/model-id
-    #   api_key: null                              # or set ANTHROPIC_API_KEY env var
-    #   weight: 1.0
-    #   output_format: json
-    #   max_tokens: 1000
-    #   temperature: null
-    #   enabled: false
-    #   prompt_path: "./examples/prompt_templates.yaml"
-
-    # - name: "mistral-large-litellm"
-    #   type: "litellm"
-    #   task: "vision_extraction"
-    #   model: "mistral/mistral-large-latest"
-    #   api_key: null                              # or set MISTRAL_API_KEY env var
-    #   weight: 0.8
-    #   output_format: json
-    #   max_tokens: 1000
-    #   temperature: null
-    #   enabled: false
-    #   prompt_path: "./examples/prompt_templates.yaml"
-
-    # - name: "groq-llama3-litellm"
-    #   type: "litellm"
-    #   task: "vision_extraction"
-    #   model: "groq/llama-3.2-90b-vision-preview"
-    #   api_key: null                              # or set GROQ_API_KEY env var
-    #   weight: 0.7
-    #   output_format: json
-    #   max_tokens: 1000
-    #   temperature: null
-    #   enabled: false
-    #   prompt_path: "./examples/prompt_templates.yaml"
-
+ 
   # Ensemble Configuration
   # -----------------------------------------------------------------------------
   ensemble:

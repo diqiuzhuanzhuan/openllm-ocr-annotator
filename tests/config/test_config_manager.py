@@ -39,6 +39,11 @@ class TestAnnotatorConfigFromDict:
                 "enabled": False,
                 "prompt_path": "/path/to/prompts.yaml",
                 "num_samples": 3,
+                "backend": "openai",
+                "rpm": 500,
+                "tpm": 60000,
+                "request_timeout": 120,
+                "curator_working_dir": "/tmp/curator",
             }
         )
         assert config.name == "my_annotator"
@@ -48,6 +53,11 @@ class TestAnnotatorConfigFromDict:
         assert config.enabled is False
         assert config.num_samples == 3
         assert config.temperature == 0.7
+        assert config.backend == "openai"
+        assert config.rpm == 500
+        assert config.tpm == 60000
+        assert config.request_timeout == 120
+        assert config.curator_working_dir == "/tmp/curator"
 
 
 class TestEnsembleStrategy:
@@ -106,3 +116,68 @@ class TestAnnotatorConfigManager:
         dataset = manager.get_dataset_config()
         assert dataset.name == "test_dataset"
         assert dataset.split_ratio == 0.8
+
+
+def test_annotator_config_from_curator_provider_params():
+    config = AnnotatorConfig.from_dict(
+        {
+            "name": "function_call_gpt_4o",
+            "type": "curator",
+            "task": "function_call_generation",
+            "provider": {
+                "model_name": "gpt-4o",
+                "backend": "openai",
+                "backend_params": {
+                    "require_all_responses": False,
+                    "max_tokens_per_minute": 8_000_000,
+                },
+                "generation_params": {"max_tokens": 4096},
+            },
+        }
+    )
+
+    assert config.model == "gpt-4o"
+    assert config.backend == "openai"
+    assert config.tpm == 8_000_000
+    assert config.max_tokens == 4096
+    assert config.backend_params["require_all_responses"] is False
+    assert config.generation_params == {"max_tokens": 4096}
+
+
+def test_function_call_generation_config_normalizes_to_task(tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        """
+version: "1.0"
+function_call_generation:
+  enable: true
+  function_dataset: "data/tool_query"
+  max_num: -1
+  output_dir: "data"
+  output_format: "jsonl"
+  name: "function_call_gpt_4o"
+  provider:
+    model_name: "gpt-4o"
+    backend: "openai"
+    backend_params:
+      require_all_responses: false
+      max_tokens_per_minute: 8_000_000
+    generation_params:
+      max_tokens: 4096
+"""
+    )
+
+    manager = AnnotatorConfigManager.from_file(config_path)
+    task = manager.get_task_config()
+    annotator = manager.get_enabled_annotators()[0]
+
+    assert task.task_id == "function_call_gpt_4o"
+    assert task.input_dir == "data/tool_query"
+    assert task.max_files == -1
+    assert task.ensemble.enabled is False
+    assert annotator.type == "curator"
+    assert annotator.model == "gpt-4o"
+    assert annotator.backend == "openai"
+    assert annotator.output_format == "jsonl"
+    assert annotator.tpm == 8_000_000
+    assert annotator.max_tokens == 4096

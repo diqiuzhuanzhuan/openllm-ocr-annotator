@@ -15,12 +15,6 @@ argparser.add_argument(
     help="Path to the annotator config file.",
 )
 
-argparser.add_argument(
-    "--max-workers",
-    default=8,
-    type=int,
-    help="Maximum number of parallel workers for every annotator.",
-)
 
 if __name__ == "__main__":
     load_dotenv()
@@ -38,7 +32,6 @@ if __name__ == "__main__":
         dataset_config=dataset_config,
         annotator_configs=annotator_configs,
         ensemble_config=ensemble_config,
-        max_workers=args.max_workers,
         voting_weights=weights,
         max_files=task_config.max_files,
         create_dataset=dataset_config.enabled,

@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Dict, List
 from openllm_ocr_annotator.utils.logger import setup_logger
 from datasets import Dataset, DatasetDict, Features, Value, Sequence, Image
-from datasets import List as HFList
+try:
+    from datasets import LargeList as HFList
+except ImportError:  # pragma: no cover - compatibility with older datasets
+    from datasets import List as HFList
 
 logger = setup_logger(__name__)
 
@@ -108,17 +111,25 @@ def create_hf_dataset(
     full_dataset = Dataset.from_list(dataset_dicts, features=features)
 
     # Split the dataset
+    total_rows = len(full_dataset)
+    test_ratio = split_ratio.get("test", 0.0)
+    validation_ratio = split_ratio.get("validation", 0.0)
+    holdout_ratio = test_ratio + validation_ratio
+
+    if total_rows < 2 or holdout_ratio <= 0 or holdout_ratio >= 1:
+        return DatasetDict({"train": full_dataset})
+
+    holdout_count = int(round(total_rows * holdout_ratio))
+    holdout_count = max(1, min(total_rows - 1, holdout_count))
+
     splits = full_dataset.train_test_split(
-        test_size=split_ratio["test"] + split_ratio.get("validation", 0),
+        test_size=holdout_count,
         shuffle=True,
         seed=42,
     )
 
-    # Further split test into test and validation
-    if "validation" in split_ratio:
-        val_size = split_ratio["validation"] / (
-            split_ratio["test"] + split_ratio["validation"]
-        )
+    if validation_ratio > 0 and test_ratio > 0 and len(splits["test"]) > 1:
+        val_size = validation_ratio / holdout_ratio
         test_splits = splits["test"].train_test_split(
             test_size=val_size, shuffle=True, seed=42
         )
@@ -130,7 +141,7 @@ def create_hf_dataset(
             }
         )
 
-    return DatasetDict(splits)
+    return DatasetDict({"train": splits["train"], "test": splits["test"]})
 
 
 def convert_to_hf_dataset(
@@ -163,7 +174,8 @@ def convert_to_hf_dataset(
 
     logger.info(f"Dataset saved to {output_path}")
     logger.info(f"Train size: {len(dataset['train'])}")
-    logger.info(f"Test size: {len(dataset['test'])}")
+    if "test" in dataset:
+        logger.info(f"Test size: {len(dataset['test'])}")
     if "validation" in dataset:
         logger.info(f"Validation size: {len(dataset['validation'])}")
 

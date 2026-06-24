@@ -48,8 +48,24 @@ def parse_json_from_text(text: str) -> dict:
         clean_json = remove_comments(text)
         return json.loads(clean_json)
     except json.JSONDecodeError:
-        logger.warning(f"Failed to parse text as JSON: {text}")
-        return {}
+        pass
+
+    # Some reasoning models prepend text (for example <think>...</think>) before
+    # the JSON payload. Try decoding from each object start until one succeeds.
+    decoder = json.JSONDecoder()
+    clean_text = remove_comments(text)
+    for index, char in enumerate(clean_text):
+        if char != "{":
+            continue
+        try:
+            parsed, _ = decoder.raw_decode(clean_text[index:])
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            continue
+
+    logger.warning(f"Failed to parse text as JSON: {text}")
+    return {}
 
 
 def save_as_json(data, path):

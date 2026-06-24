@@ -3,7 +3,6 @@
 
 from openllm_ocr_annotator.utils.logger import setup_logger
 from pathlib import Path
-import multiprocessing as mp
 from typing import List
 from openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcessor
 from openllm_ocr_annotator.config import AnnotatorConfig
@@ -18,7 +17,6 @@ class ParallelProcessor:
         self,
         annotator_configs: List[AnnotatorConfig],
         output_dir: Path,
-        max_workers: int = 8,
     ):
         """Initialize with annotator configurations instead of instances.
 
@@ -28,7 +26,6 @@ class ParallelProcessor:
         """
         self.annotator_configs = annotator_configs
         self.output_dir = output_dir
-        self.max_workers = max_workers
 
     @staticmethod
     def create_annotator(config: AnnotatorConfig):
@@ -83,7 +80,6 @@ class ParallelProcessor:
             processor = AnnotatorProcessor(
                 annotator_config=config,
                 output_dir=self.output_dir,
-                max_workers=self.max_workers,
             )
             processor.process_images(image_files=image_files)
 
@@ -92,16 +88,6 @@ class ParallelProcessor:
             raise
 
     def run_parallel(self, image_files: List[Path]):
-        """Run all annotators in parallel."""
-        processes = []
-
+        """Run all annotators sequentially."""
         for config in self.annotator_configs:
-            p = mp.Process(
-                target=self.run_annotator_process, args=(config, image_files)
-            )
-            p.start()
-            processes.append(p)
-
-        # Wait for all processes to complete
-        for p in processes:
-            p.join()
+            self.run_annotator_process(config, image_files)

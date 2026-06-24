@@ -35,7 +35,7 @@ def mock_processor(tmp_path):
         mock_annotator.model = "gpt-4-vision-preview"
         mock_create.return_value = mock_annotator
         processor = AnnotatorProcessor(
-            annotator_config=config, output_dir=tmp_path, max_workers=1
+            annotator_config=config, output_dir=tmp_path
         )
     return processor
 

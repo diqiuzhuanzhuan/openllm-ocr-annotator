@@ -6,6 +6,8 @@ from openllm_ocr_annotator.voters.base import BaseVoter
 from typing import List, Dict, Optional
 from collections import defaultdict
 
+from openllm_ocr_annotator.utils.formatter import parse_json_from_text
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,8 +84,17 @@ class WeightedVoter(BaseVoter):
             # Get the weight for this annotator/model
             weight = self.get_weight(annotator_id, num_samples)
 
+            result = annotation.get("result", {})
+            if isinstance(result, str):
+                parsed_result = parse_json_from_text(result)
+                result = parsed_result or {"fields": []}
+                annotation["result"] = result
+            elif not isinstance(result, dict):
+                result = {"fields": []}
+                annotation["result"] = result
+
             # Get fields from the result
-            fields = annotation.get("result", {}).get("fields", [])
+            fields = result.get("fields", [])
 
             # Process each field in the annotation
             for field in fields:

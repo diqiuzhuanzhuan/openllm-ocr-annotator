@@ -42,7 +42,6 @@ def tmp_yaml_config(tmp_path):
             "output_dir": str(tmp_path / "outputs"),
             "prompt_path": str(tmp_path / "prompts.yaml"),
             "max_files": 10,
-            "max_workers": 2,
             "num_samples": 1,
             "annotators": [
                 {

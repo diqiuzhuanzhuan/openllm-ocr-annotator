@@ -41,6 +41,12 @@ def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
         )
 
         return LiteLLMAnnotator.from_config(config=config)
+    elif config.type == "curator":
+        from openllm_ocr_annotator.annotators.curator_annotator import (
+            CuratorAnnotator,
+        )
+
+        return CuratorAnnotator.from_config(config=config)
     elif config.type == "grok":
         from openllm_ocr_annotator.annotators.grok_annotator import GrokAnnotator
 
@@ -61,15 +67,9 @@ def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
 
 class AnnotatorProcessor:
     def __init__(
-        self, annotator_config: AnnotatorConfig, output_dir: Path, max_workers: int = 8
+        self, annotator_config: AnnotatorConfig, output_dir: Path
     ):
-        """Initialize the processor with an annotator and output directory.
-
-        Args:
-            annotator: The annotator to process images with
-            output_dir: Base output directory for results
-            max_workers: Maximum number of parallel workers (default: 8)
-        """
+        """Initialize the processor with an annotator and output directory."""
         self.annotator = create_annotator(annotator_config)
         # Create output directory structure
         model_version = getattr(self.annotator, "model", "default")
@@ -104,7 +104,6 @@ class AnnotatorProcessor:
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self.sample_dirs = [self.output_dir]
 
-        self.max_workers = max_workers
 
     def get_output_dir(self) -> Path:
         """Get the output directory for the current annotator."""
@@ -122,24 +121,11 @@ class AnnotatorProcessor:
             self.process_single_image(str(img_path))
 
     def process_images(self, image_files: List[Path]):
-        """Process a list of images with the annotator using a thread pool.
-
-        Args:
-            image_files (List[Path]): List of image file paths to process.
-        """
-        from concurrent.futures import ThreadPoolExecutor
-
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [
-                executor.submit(self.process_single_image, img_path)
-                for img_path in image_files
-            ]
-            _ = [
-                future.result()
-                for future in tqdm(
-                    futures, desc=f"Processing with {self.annotator.name}", unit="image"
-                )
-            ]
+        """Process a list of images sequentially."""
+        for img_path in tqdm(
+            image_files, desc=f"Processing with {self.annotator.name}", unit="image"
+        ):
+            self.process_single_image(img_path)
 
     def _parse_and_validate_result(
         self, result: Union[str, Dict], img_path: Path, sample_id: Optional[int] = None

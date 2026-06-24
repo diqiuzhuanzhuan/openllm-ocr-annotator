@@ -113,3 +113,10 @@ class TestReadJsonl:
         path.write_text('{"a": 1}\n\n{"b": 2}\n')
         result = read_jsonl(str(path), sync=True)
         assert len(result) == 2
+
+
+def test_parse_json_after_reasoning_prefix():
+    text = '<think>reasoning</think>\n\n{"fields": [{"field_name": "k", "value": "v"}]}'
+    assert parse_json_from_text(text) == {
+        "fields": [{"field_name": "k", "value": "v"}]
+    }

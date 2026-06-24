@@ -108,3 +108,27 @@ class TestVotingManagerGetVotedResult:
             manager.get_voted_result(
                 Path("missing.jpg"), output_dir=tmp_path, num_samples=1
             )
+
+
+def test_collect_annotations_normalizes_string_result(tmp_path):
+    from openllm_ocr_annotator.voters.weighted import WeightedVoter
+
+    result_dir = tmp_path / "ann" / "model"
+    result_dir.mkdir(parents=True)
+    import json
+
+    (result_dir / "img.json").write_text(
+        json.dumps(
+            {
+                "result": '<think>x</think> {"fields": [{"field_name": "k", "value": "v", "confidence": 0.9}]}',
+            }
+        )
+    )
+    manager = VotingManager(
+        annotator_infos=[{"results_dir": tmp_path, "name": "ann", "model": "model"}],
+        voter=WeightedVoter(),
+    )
+
+    annotations = manager.collect_annotations(tmp_path, "img")
+
+    assert annotations["ann/model"]["result"]["fields"][0]["field_name"] == "k"

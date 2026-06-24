@@ -90,20 +90,16 @@ sequenceDiagram
 
 Failures for an individual image are logged and normally do not stop processing other images. A failure at the outer task level is logged and re-raised.
 
-## Concurrency Model
+## Throughput Model
 
-The pipeline uses two levels of concurrency:
+The pipeline no longer manages its own annotator-level concurrency. Image batches are passed into the selected annotator implementation, and curator-backed annotators rely on curator's own request scheduling and rate-limit controls.
 
-- One operating-system process is started for each enabled annotator.
-- Each annotator process uses a thread pool to process images.
+For curator-backed annotators, throughput is governed by curator backend parameters such as:
 
-`max_workers` controls the number of image threads inside each annotator process. Therefore, the approximate maximum number of concurrent API calls is:
+- `max_requests_per_minute`
+- `max_tokens_per_minute`
 
-```text
-enabled annotators x max_workers
-```
-
-This design isolates provider clients between processes while allowing network-bound image requests to overlap. API rate limits and local memory consumption should be considered when increasing either value.
+Local memory usage and provider limits should still be considered when raising those values.
 
 ## Annotator Interface
 

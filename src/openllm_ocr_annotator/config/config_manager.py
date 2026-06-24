@@ -50,24 +50,55 @@ class AnnotatorConfig:
     num_samples: Optional[int] = (
         1  # To enable sampling, set num_samples > 1 and temperature between 0 and 1
     )
+    backend: Optional[str] = None
+    rpm: Optional[int] = None
+    tpm: Optional[int] = None
+    estimated_input_tokens: Optional[int] = None
+    request_timeout: Optional[int] = None
+    curator_working_dir: Optional[str] = None
+    provider: Optional[Dict] = None
+    backend_params: Optional[Dict] = None
+    generation_params: Optional[Dict] = None
 
     @classmethod
     def from_dict(cls, config: Dict) -> "AnnotatorConfig":
         """Load configuration from a dictionary"""
+        provider = config.get("provider") or {}
+        backend_params = (
+            provider.get("backend_params") or config.get("backend_params") or {}
+        )
+        generation_params = (
+            provider.get("generation_params") or config.get("generation_params") or {}
+        )
         return cls(
             name=config.get("name", "default_annotator"),
             type=config.get("type", "openai"),
             task=config.get("task", "ocr"),
-            api_key=config.get("api_key", None),
-            model=config.get("model", None),
-            base_url=config.get("base_url", None),
+            api_key=config.get("api_key", provider.get("api_key", None)),
+            model=config.get("model", provider.get("model_name", None)),
+            base_url=config.get("base_url", backend_params.get("base_url", None)),
             weight=config.get("weight", 1.0),
             output_format=config.get("output_format", "json"),
-            max_tokens=config.get("max_tokens", None),
-            temperature=config.get("temperature", None),
+            max_tokens=config.get(
+                "max_tokens", generation_params.get("max_tokens", None)
+            ),
+            temperature=config.get(
+                "temperature", generation_params.get("temperature", None)
+            ),
             enabled=config.get("enabled", True),
             prompt_path=config.get("prompt_path", None),
             num_samples=config.get("num_samples", 1),
+            backend=config.get("backend", provider.get("backend", None)),
+            rpm=config.get("rpm", backend_params.get("max_requests_per_minute", None)),
+            tpm=config.get("tpm", backend_params.get("max_tokens_per_minute", None)),
+            estimated_input_tokens=config.get("estimated_input_tokens", None),
+            request_timeout=config.get(
+                "request_timeout", backend_params.get("request_timeout", None)
+            ),
+            curator_working_dir=config.get("curator_working_dir", None),
+            provider=provider or None,
+            backend_params=backend_params or None,
+            generation_params=generation_params or None,
         )
 
 
@@ -133,7 +164,6 @@ class TaskConfig:
     annotators: List[AnnotatorConfig]
     ensemble: EnsembleConfig
     dataset: DatasetConfig
-    max_workers: Optional[int] = 8
     max_files: int = -1  # -1 means no limit
     num_samples: int = 1  # Number of samples per image
 
@@ -148,7 +178,52 @@ class AnnotatorConfigManager:
 
     def __init__(self, config: Dict):
         self.version = config.get("version", "1.0")
-        self.task = self._parse_task_config(config["task"])
+        self.task = self._parse_task_config(self._normalize_task_config(config))
+
+    def _normalize_task_config(self, config: Dict) -> Dict:
+        """Normalize supported top-level config shapes into TaskConfig input."""
+        if "task" in config:
+            return config["task"]
+        if "function_call_generation" in config:
+            return self._function_call_generation_to_task(
+                config["function_call_generation"]
+            )
+        raise KeyError("Config must include either 'task' or 'function_call_generation'.")
+
+    def _function_call_generation_to_task(self, config: Dict) -> Dict:
+        provider = config.get("provider") or {}
+        return {
+            "task_id": config.get("name", "function_call_generation"),
+            "input_dir": config.get("function_dataset"),
+            "output_dir": config.get("output_dir", "data"),
+            "prompt_path": config.get("prompt_path"),
+            "max_files": config.get("max_num", -1),
+            "annotators": [
+                {
+                    "name": config.get("name", "function_call_generation"),
+                    "type": config.get("type", "curator"),
+                    "task": config.get("task", "function_call_generation"),
+                    "enabled": config.get("enable", True),
+                    "output_format": config.get("output_format", "jsonl"),
+                    "prompt_path": config.get("prompt_path"),
+                    "provider": provider,
+                }
+            ],
+            "ensemble": {
+                "enabled": False,
+                "method": "weighted_vote",
+                "min_confidence": 0.0,
+                "agreement_threshold": 0.0,
+                "output_format": config.get("output_format", "jsonl"),
+            },
+            "dataset": {
+                "enabled": False,
+                "name": config.get("name", "function_call_generation"),
+                "format": config.get("output_format", "jsonl"),
+                "output_dir": config.get("output_dir", "data"),
+                "num_samples": config.get("max_num", -1),
+            },
+        }
 
     @classmethod
     def from_file(cls, config_path: str | Path) -> "AnnotatorConfigManager":
@@ -199,6 +274,8 @@ class AnnotatorConfigManager:
         Returns:
             TaskConfig instance
         """
+        task_config = dict(task_config)
+
         # Validate main task config
         self._validate_config_keys(task_config, TaskConfig)
 
@@ -244,7 +321,6 @@ class AnnotatorConfigManager:
             annotators=annotators,
             ensemble=ensemble,
             dataset=dataset,
-            max_workers=task_config.get("max_workers", 8),
             num_samples=task_config.get("num_samples", 1),
         )
 

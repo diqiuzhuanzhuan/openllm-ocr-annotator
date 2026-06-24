@@ -11,6 +11,7 @@ from openllm_ocr_annotator.voters.majority import MajorityVoter
 from openllm_ocr_annotator.voters.weighted import WeightedVoter
 from openllm_ocr_annotator.voters.manager import VotingManager
 from openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
+from openllm_ocr_annotator.pipeline.curator_processor import run_curator_annotation
 from openllm_ocr_annotator.config import AnnotatorConfig, TaskConfig, DatasetConfig
 from openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
 from openllm_ocr_annotator.utils.formatter import (
@@ -48,14 +49,29 @@ def run_parallel_annotation(
     annotator_configs: List[AnnotatorConfig],
     output_path: Path,
     image_files: List[Path],
-    max_workers: int = 8,
+    task_prompt_path: str | None = None,
 ):
-    processor = ParallelProcessor(
-        annotator_configs=annotator_configs,
-        output_dir=output_path,
-        max_workers=max_workers,
-    )
-    processor.run_parallel(image_files)
+    curator_configs = [
+        config for config in annotator_configs if config.type == "curator"
+    ]
+    legacy_configs = [
+        config for config in annotator_configs if config.type != "curator"
+    ]
+
+    if legacy_configs:
+        processor = ParallelProcessor(
+            annotator_configs=legacy_configs,
+            output_dir=output_path,
+        )
+        processor.run_parallel(image_files)
+
+    if curator_configs:
+        run_curator_annotation(
+            annotator_configs=curator_configs,
+            output_dir=output_path,
+            image_files=image_files,
+            task_prompt_path=task_prompt_path,
+        )
 
 
 def run_voting_and_save(
@@ -149,7 +165,6 @@ def run_batch_annotation(
     task_config: TaskConfig,
     dataset_config: DatasetConfig,
     annotator_configs: List[AnnotatorConfig],
-    max_workers: int = 8,
     ensemble_config: EnsembleConfig | None = None,
     format: str | List[str] = "json",
     max_files: Optional[int] = -1,
@@ -166,7 +181,10 @@ def run_batch_annotation(
             logger.warning(f"No images found in {task_config.input_dir}")
             return
         run_parallel_annotation(
-            annotator_configs, output_path, image_files, max_workers
+            annotator_configs,
+            output_path,
+            image_files,
+            task_config.prompt_path,
         )
         voted_dir = None
         if ensemble_config and ensemble_config.enabled:
@@ -209,15 +227,12 @@ if __name__ == "__main__":
     # Run batch annotation with weighted voting and create dataset
     task_config = config_manager.get_task_config()
     run_batch_annotation(
-        input_dir=task_config.input_dir,
-        output_dir=task_config.output_dir,
-        task_id=task_config.task_id,
+        task_config=task_config,
+        dataset_config=dataset_config,
         annotator_configs=annotator_configs,
-        ensemble_strategy=ensemble_config.method,
-        voting_weights=weights,
+        ensemble_config=ensemble_config,
         max_files=task_config.max_files,
         create_dataset=dataset_config.enabled,
         dataset_split_ratio=dataset_config.split_ratio,
-        max_workers=task_config.max_workers,
         num_samples=task_config.num_samples,
     )
