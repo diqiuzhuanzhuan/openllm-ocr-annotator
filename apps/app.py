@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import logging
+
 from dotenv import load_dotenv
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
 from openllm_ocr_annotator.pipeline import run_batch_annotation
@@ -18,6 +20,8 @@ argparser.add_argument(
 
 if __name__ == "__main__":
     load_dotenv()
+    logging.getLogger("litellm").setLevel(logging.WARNING)
+    logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     args = argparser.parse_args()
     config_manager = AnnotatorConfigManager.from_file(args.config)
 
