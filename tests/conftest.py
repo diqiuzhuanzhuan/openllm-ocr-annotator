@@ -9,7 +9,7 @@ from openllm_ocr_annotator.config.config_manager import AnnotatorConfig
 def minimal_annotator_config():
     return AnnotatorConfig(
         name="test_annotator",
-        type="openai",
+        type="curator",
         task="vision_extraction",
         api_key="test-key",
         model="gpt-4-vision-preview",
@@ -46,7 +46,7 @@ def tmp_yaml_config(tmp_path):
             "annotators": [
                 {
                     "name": "annotator_a",
-                    "type": "openai",
+                    "type": "curator",
                     "task": "vision_extraction",
                     "api_key": "key-a",
                     "model": "gpt-4-vision-preview",
@@ -55,7 +55,7 @@ def tmp_yaml_config(tmp_path):
                 },
                 {
                     "name": "annotator_b",
-                    "type": "openai",
+                    "type": "curator",
                     "task": "vision_extraction",
                     "api_key": "key-b",
                     "model": "gpt-3.5-turbo",

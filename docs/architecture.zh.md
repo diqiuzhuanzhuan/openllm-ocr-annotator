@@ -119,12 +119,9 @@ class BaseAnnotator(ABC):
 
 目前可实例化的适配器类型包括：
 
-- `openai`
-- `claude`
-- `gemini`
-- `litellm`
+- `curator`
 
-LiteLLM 提供了访问其他提供商的统一路由。项目中存在其他提供商的占位模块，但当前的标注器工厂不会选择它们。
+Curator 通过后端和 provider 参数负责模型提供商路由。
 
 发起 API 调用前，图像会在需要时编码为 base64。尺寸过大的图像会在保持宽高比的情况下缩放。提示词模板通过 `PromptManager` 加载；如果没有提供商专用模板，则回退到默认模板。
 

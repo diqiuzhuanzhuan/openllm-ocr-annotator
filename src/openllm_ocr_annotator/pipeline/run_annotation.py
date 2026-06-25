@@ -10,7 +10,6 @@ from typing import List
 from openllm_ocr_annotator.voters.majority import MajorityVoter
 from openllm_ocr_annotator.voters.weighted import WeightedVoter
 from openllm_ocr_annotator.voters.manager import VotingManager
-from openllm_ocr_annotator.pipeline.parallel_processor import ParallelProcessor
 from openllm_ocr_annotator.pipeline.curator_processor import run_curator_annotation
 from openllm_ocr_annotator.config import AnnotatorConfig, TaskConfig, DatasetConfig
 from openllm_ocr_annotator.config import EnsembleStrategy, EnsembleConfig
@@ -51,27 +50,17 @@ def run_parallel_annotation(
     image_files: List[Path],
     task_prompt_path: str | None = None,
 ):
-    curator_configs = [
-        config for config in annotator_configs if config.type == "curator"
-    ]
-    legacy_configs = [
-        config for config in annotator_configs if config.type != "curator"
-    ]
-
-    if legacy_configs:
-        processor = ParallelProcessor(
-            annotator_configs=legacy_configs,
-            output_dir=output_path,
+    unsupported = [config.type for config in annotator_configs if config.type != "curator"]
+    if unsupported:
+        raise ValueError(
+            f"Unsupported annotator types: {unsupported}. Only 'curator' is supported."
         )
-        processor.run_parallel(image_files)
-
-    if curator_configs:
-        run_curator_annotation(
-            annotator_configs=curator_configs,
-            output_dir=output_path,
-            image_files=image_files,
-            task_prompt_path=task_prompt_path,
-        )
+    run_curator_annotation(
+        annotator_configs=annotator_configs,
+        output_dir=output_path,
+        image_files=image_files,
+        task_prompt_path=task_prompt_path,
+    )
 
 
 def run_voting_and_save(

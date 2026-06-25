@@ -25,7 +25,7 @@ class VotingManager:
 
         Args:
             annotator_infos: List of dicts containing annotator information, each with:
-                - 'name': Annotator name (e.g. 'OpenAIAnnotator')
+                - 'name': Annotator name (e.g. 'curator_annotator')
                 - 'model': Model version (e.g. 'gpt-4-vision-preview')
             voter: Voting strategy to use
         """

@@ -63,10 +63,10 @@ task:
 
 annotators:
   - name: my_annotator
-    model: gpt-4-vision-preview  # or gemini-pro-vision
+    model: gpt-4o-mini  # or gpt-4o
     api_key: your_api_key_here
     task: vision_extraction
-    type: openai                 # Use api compatible with OpenAI
+    type: curator                # Use the Curator annotator
     base_url: 'http://127.0.0.1:8879/v1'   # If you set up your own OpenAI compatible API server
     enabled: true                # Disable this annotator by setting to false
     max_retries: 3

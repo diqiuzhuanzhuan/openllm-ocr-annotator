@@ -20,9 +20,8 @@ class WeightedVoter(BaseVoter):
         Args:
             weights: Dictionary mapping "annotator/model" to weight values.
                    Example: {
-                       "OpenAIAnnotator/gpt-4-vision-preview": 1.0,
-                       "OpenAIAnnotator/gpt-3.5-turbo-vision": 0.8,
-                       "ClaudeAnnotator/claude-3-opus": 0.9
+                       "curator_annotator/gpt-4o-mini": 1.0,
+                       "curator_annotator/gpt-4o": 0.8,
                    }
                    If not provided, all annotators will have equal weight of 1.0
         """
@@ -58,7 +57,7 @@ class WeightedVoter(BaseVoter):
         # Use default annotator IDs if none provided
         if not annotator_ids:
             logger.warning("No annotator IDs provided, using model names as IDs")
-            annotator_ids = [f"OpenAIAnnotator/{ann['model']}" for ann in annotations]
+            annotator_ids = [f"curator_annotator/{ann['model']}" for ann in annotations]
 
         if len(annotations) != len(annotator_ids):
             raise ValueError("Number of annotations and annotator IDs must match")

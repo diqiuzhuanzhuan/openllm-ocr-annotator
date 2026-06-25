@@ -17,52 +17,15 @@ logger = setup_logger(__name__)
 
 def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
     """Create a new annotator instance from config."""
-    if config.type == "openai":
-        from openllm_ocr_annotator.annotators.openai_annotator import (
-            OpenAIAnnotator,
-        )
-
-        return OpenAIAnnotator.from_config(config=config)
-    elif config.type == "claude":
-        from openllm_ocr_annotator.annotators.claude_annotator import (
-            ClaudeAnnotator,
-        )
-
-        return ClaudeAnnotator.from_config(config=config)
-    elif config.type == "gemini":
-        from openllm_ocr_annotator.annotators.gemini_annotator import (
-            GeminiAnnotator,
-        )
-
-        return GeminiAnnotator.from_config(config=config)
-    elif config.type == "litellm":
-        from openllm_ocr_annotator.annotators.litellm_annotator import (
-            LiteLLMAnnotator,
-        )
-
-        return LiteLLMAnnotator.from_config(config=config)
-    elif config.type == "curator":
+    if config.type == "curator":
         from openllm_ocr_annotator.annotators.curator_annotator import (
             CuratorAnnotator,
         )
 
         return CuratorAnnotator.from_config(config=config)
-    elif config.type == "grok":
-        from openllm_ocr_annotator.annotators.grok_annotator import GrokAnnotator
-
-        return GrokAnnotator.from_config(config=config)
-    elif config.type == "mistral":
-        from openllm_ocr_annotator.annotators.mistral_annotator import (
-            MistralAnnotator,
-        )
-
-        return MistralAnnotator.from_config(config=config)
-    elif config.type in ("qwen", "qwen2.5"):
-        from openllm_ocr_annotator.annotators.qwen_annotator import QwenAnnotator
-
-        return QwenAnnotator.from_config(config=config)
-    else:
-        raise ValueError(f"Unknown annotator type: {config.type}")
+    raise ValueError(
+        f"Unknown annotator type: {config.type}. Only 'curator' is supported."
+    )
 
 
 class AnnotatorProcessor:

@@ -119,12 +119,9 @@ class BaseAnnotator(ABC):
 
 Currently instantiated adapter types are:
 
-- `openai`
-- `claude`
-- `gemini`
-- `litellm`
+- `curator`
 
-LiteLLM provides a unified route to additional providers. Placeholder modules for other providers exist, but they are not selected by the current annotator factory.
+Curator handles provider routing through its configured backend and provider parameters.
 
 Before an API call, images are encoded as base64 where required. Oversized images are resized while preserving their aspect ratio. Prompt templates are loaded through `PromptManager`, with provider-specific templates falling back to defaults.
 

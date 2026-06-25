@@ -70,9 +70,14 @@ class AnnotatorConfig:
         generation_params = (
             provider.get("generation_params") or config.get("generation_params") or {}
         )
+        annotator_type = config.get("type", "curator")
+        if annotator_type != "curator":
+            raise ValueError(
+                f"Unsupported annotator type: {annotator_type}. Only 'curator' is supported."
+            )
         return cls(
             name=config.get("name", "default_annotator"),
-            type=config.get("type", "openai"),
+            type=annotator_type,
             task=config.get("task", "ocr"),
             api_key=config.get("api_key", provider.get("api_key", None)),
             model=config.get("model", provider.get("model_name", None)),
@@ -285,6 +290,10 @@ class AnnotatorConfigManager:
             # Validate annotator config
             self._validate_config_keys(ann_config, AnnotatorConfig, f"annotators[{i}]")
             annotator = AnnotatorConfig.from_dict(ann_config)
+            if annotator.type != "curator":
+                raise ValueError(
+                    f"Unsupported annotator type: {annotator.type}. Only 'curator' is supported."
+                )
 
             annotators.append(annotator)
 

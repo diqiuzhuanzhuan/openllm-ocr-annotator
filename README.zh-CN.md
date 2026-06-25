@@ -67,10 +67,10 @@ task:
 
 annotators:
   - name: my_annotator
-    model: gpt-4-vision-preview         # 或 gemini-pro-vision
+    model: gpt-4o-mini                  # 或 gpt-4o
     api_key: your_api_key_here
     task: vision_extraction
-    type: openai                        # 使用 OpenAI 兼容 API
+    type: curator                       # 使用 Curator 标注器
     base_url: 'http://127.0.0.1:8879/v1' # 自建 OpenAI 兼容 API 服务的地址
     enabled: true                       # 设置为 false 可禁用此标注器
     max_retries: 3

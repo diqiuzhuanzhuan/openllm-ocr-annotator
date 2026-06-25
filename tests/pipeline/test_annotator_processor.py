@@ -12,7 +12,7 @@ from openllm_ocr_annotator.pipeline.annotator_processor import AnnotatorProcesso
 def _make_config(**kwargs):
     defaults = dict(
         name="test_annotator",
-        type="openai",
+        type="curator",
         task="vision_extraction",
         api_key="test-key",
         model="gpt-4-vision-preview",

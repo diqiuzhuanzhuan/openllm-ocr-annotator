@@ -13,10 +13,10 @@ from openllm_ocr_annotator.config.config_manager import (
 class TestAnnotatorConfigFromDict:
     def test_minimal_dict_uses_defaults(self):
         config = AnnotatorConfig.from_dict(
-            {"name": "test", "type": "openai", "task": "vision_extraction"}
+            {"name": "test", "task": "vision_extraction"}
         )
         assert config.name == "test"
-        assert config.type == "openai"
+        assert config.type == "curator"
         assert config.task == "vision_extraction"
         assert config.weight == 1.0
         assert config.enabled is True
@@ -27,10 +27,10 @@ class TestAnnotatorConfigFromDict:
         config = AnnotatorConfig.from_dict(
             {
                 "name": "my_annotator",
-                "type": "gemini",
+                "type": "curator",
                 "task": "ocr",
                 "api_key": "secret-key",
-                "model": "gemini-pro-vision",
+                "model": "gpt-4o-mini",
                 "base_url": "http://localhost:8080",
                 "weight": 0.8,
                 "output_format": "json",
@@ -47,7 +47,7 @@ class TestAnnotatorConfigFromDict:
             }
         )
         assert config.name == "my_annotator"
-        assert config.type == "gemini"
+        assert config.type == "curator"
         assert config.api_key == "secret-key"
         assert config.weight == 0.8
         assert config.enabled is False
@@ -58,6 +58,12 @@ class TestAnnotatorConfigFromDict:
         assert config.tpm == 60000
         assert config.request_timeout == 120
         assert config.curator_working_dir == "/tmp/curator"
+
+    def test_non_curator_type_raises(self):
+        with pytest.raises(ValueError, match="Only 'curator' is supported"):
+            AnnotatorConfig.from_dict(
+                {"name": "test", "type": "openai", "task": "vision_extraction"}
+            )
 
 
 class TestEnsembleStrategy:
