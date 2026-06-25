@@ -47,6 +47,24 @@ task:
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
 
+    - name: "google"
+      type: curator
+      task: "vision_extraction"
+      provider:
+        model_name: "gemini/gemini-3.1-pro-preview"
+        backend: "litellm"
+        backend_params:
+          require_all_responses: False
+          max_tokens_per_minute: 100_000_000
+        generation_params:
+          max_tokens: 4096
+      weight: 1.0
+      output_format: json
+      enabled: true
+      prompt_path: "./examples/prompt_templates.yaml"
+  
+
+
  
   # Ensemble Configuration
   # -----------------------------------------------------------------------------
