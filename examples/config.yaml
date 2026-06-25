@@ -15,7 +15,7 @@ task:
   # -----------------------------------------------------------------------------
   annotators:
     # GPT-4.1 Vision Model
-    - name: "gpt-5"
+    - name: "gpt"
       type: curator
       task: "vision_extraction"
       provider:
@@ -31,7 +31,7 @@ task:
       enabled: true
       prompt_path: "./examples/prompt_templates.yaml"
 
-    - name: "gpt-5.5"
+    - name: "gpt"
       type: curator
       task: "vision_extraction"
       provider:
