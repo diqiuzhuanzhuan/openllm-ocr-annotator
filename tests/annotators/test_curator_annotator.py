@@ -46,12 +46,16 @@ class TestFromConfig:
 class TestCreateAnnotator:
     def test_factory_supports_curator_type(self):
         config = _make_config()
-        with patch.object(CuratorAnnotator, "from_config", return_value="annotator") as mock_from_config:
+        with patch.object(
+            CuratorAnnotator, "from_config", return_value="annotator"
+        ) as mock_from_config:
             assert create_annotator(config) == "annotator"
             mock_from_config.assert_called_once_with(config=config)
 
 
-@pytest.mark.skipif(curator is not None, reason="curator optional dependency is installed")
+@pytest.mark.skipif(
+    curator is not None, reason="curator optional dependency is installed"
+)
 def test_missing_curator_dependency_error_is_actionable():
     config = _make_config()
     with pytest.raises(ImportError, match="bespokelabs-curator"):

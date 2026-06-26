@@ -13,7 +13,9 @@ logger = setup_logger(__name__)
 
 try:
     from bespokelabs import curator
-except ImportError:  # pragma: no cover - exercised only when optional dependency is absent
+except (
+    ImportError
+):  # pragma: no cover - exercised only when optional dependency is absent
     curator = None
 
 _CuratorLLMBase = curator.LLM if curator is not None else object

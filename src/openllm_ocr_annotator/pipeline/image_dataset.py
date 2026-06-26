@@ -11,10 +11,14 @@ from openllm_ocr_annotator.config import AnnotatorConfig
 
 def model_output_dir(output_dir: Path, config: AnnotatorConfig) -> Path:
     """Return the legacy-compatible output directory for one annotator."""
-    return output_dir / config.name.lstrip("/") / (config.model or "default").lstrip("/")
+    return (
+        output_dir / config.name.lstrip("/") / (config.model or "default").lstrip("/")
+    )
 
 
-def result_path_for_row(base_dir: Path, stem: str, sample_id: int | None = None) -> Path:
+def result_path_for_row(
+    base_dir: Path, stem: str, sample_id: int | None = None
+) -> Path:
     """Return where a row should be saved in the legacy JSON layout."""
     if sample_id is None:
         return base_dir / f"{stem}.json"

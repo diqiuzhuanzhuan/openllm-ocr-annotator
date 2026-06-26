@@ -29,9 +29,7 @@ def create_annotator(config: AnnotatorConfig) -> "BaseAnnotator":
 
 
 class AnnotatorProcessor:
-    def __init__(
-        self, annotator_config: AnnotatorConfig, output_dir: Path
-    ):
+    def __init__(self, annotator_config: AnnotatorConfig, output_dir: Path):
         """Initialize the processor with an annotator and output directory."""
         self.annotator = create_annotator(annotator_config)
         # Create output directory structure
@@ -66,7 +64,6 @@ class AnnotatorProcessor:
             self.output_dir = output_dir / name.lstrip("/") / model_version.lstrip("/")
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self.sample_dirs = [self.output_dir]
-
 
     def get_output_dir(self) -> Path:
         """Get the output directory for the current annotator."""

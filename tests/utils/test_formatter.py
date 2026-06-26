@@ -117,6 +117,4 @@ class TestReadJsonl:
 
 def test_parse_json_after_reasoning_prefix():
     text = '<think>reasoning</think>\n\n{"fields": [{"field_name": "k", "value": "v"}]}'
-    assert parse_json_from_text(text) == {
-        "fields": [{"field_name": "k", "value": "v"}]
-    }
+    assert parse_json_from_text(text) == {"fields": [{"field_name": "k", "value": "v"}]}

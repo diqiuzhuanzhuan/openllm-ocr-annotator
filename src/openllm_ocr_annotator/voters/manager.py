@@ -69,7 +69,9 @@ class VotingManager:
                         result_key = f"{annotator_name}/{model_version}/sample_{str(i)}"
                         if result_path.exists():
                             with open(result_path, "r") as f:
-                                results[result_key] = _normalize_annotation_result(json.load(f))
+                                results[result_key] = _normalize_annotation_result(
+                                    json.load(f)
+                                )
                         else:
                             logger.warning(
                                 f"No annotation result found at: {result_path}"
@@ -78,7 +80,9 @@ class VotingManager:
                     if result_path.exists():
                         with open(result_path, "r") as f:
                             result_key = f"{annotator_name}/{model_version}"
-                            results[result_key] = _normalize_annotation_result(json.load(f))
+                            results[result_key] = _normalize_annotation_result(
+                                json.load(f)
+                            )
                     else:
                         logger.warning(f"No annotation result found at: {result_path}")
             except Exception as e:

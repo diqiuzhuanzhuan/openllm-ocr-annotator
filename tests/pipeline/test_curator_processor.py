@@ -32,15 +32,17 @@ def test_save_response_dataset_uses_legacy_single_sample_layout(tmp_path):
     processor.num_samples = 1
     processor.model_dir = tmp_path / "curator_test" / "gpt-4o-mini"
 
-    dataset = Dataset.from_list([
-        {
-            "stem": "a",
-            "filename": "a.jpg",
-            "image_path": str(tmp_path / "a.jpg"),
-            "sample_id": 0,
-            "result": '{"fields": []}',
-        }
-    ])
+    dataset = Dataset.from_list(
+        [
+            {
+                "stem": "a",
+                "filename": "a.jpg",
+                "image_path": str(tmp_path / "a.jpg"),
+                "sample_id": 0,
+                "result": '{"fields": []}',
+            }
+        ]
+    )
 
     processor._save_response_dataset(dataset)
 
@@ -55,15 +57,17 @@ def test_run_calls_curator_llm_with_dataset_and_working_dir(tmp_path):
     config = _config(curator_working_dir=str(tmp_path / "curator-cache"))
     processor = CuratorAnnotatorProcessor(config, tmp_path)
 
-    response = Dataset.from_list([
-        {
-            "stem": "a",
-            "filename": "a.jpg",
-            "image_path": str(img),
-            "sample_id": 0,
-            "result": '{"fields": []}',
-        }
-    ])
+    response = Dataset.from_list(
+        [
+            {
+                "stem": "a",
+                "filename": "a.jpg",
+                "image_path": str(img),
+                "sample_id": 0,
+                "result": '{"fields": []}',
+            }
+        ]
+    )
     llm = MagicMock(return_value=response)
 
     with patch.object(processor, "_create_llm", return_value=llm):

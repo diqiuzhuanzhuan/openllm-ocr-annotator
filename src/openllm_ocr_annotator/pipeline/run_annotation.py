@@ -50,7 +50,9 @@ def run_parallel_annotation(
     image_files: List[Path],
     task_prompt_path: str | None = None,
 ):
-    unsupported = [config.type for config in annotator_configs if config.type != "curator"]
+    unsupported = [
+        config.type for config in annotator_configs if config.type != "curator"
+    ]
     if unsupported:
         raise ValueError(
             f"Unsupported annotator types: {unsupported}. Only 'curator' is supported."

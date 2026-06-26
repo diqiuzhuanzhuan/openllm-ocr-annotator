@@ -193,7 +193,9 @@ class AnnotatorConfigManager:
             return self._function_call_generation_to_task(
                 config["function_call_generation"]
             )
-        raise KeyError("Config must include either 'task' or 'function_call_generation'.")
+        raise KeyError(
+            "Config must include either 'task' or 'function_call_generation'."
+        )
 
     def _function_call_generation_to_task(self, config: Dict) -> Dict:
         provider = config.get("provider") or {}

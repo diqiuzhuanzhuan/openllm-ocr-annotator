@@ -48,9 +48,15 @@ def _merged_generation_params(config: AnnotatorConfig) -> dict[str, Any]:
 def _merged_backend_params(config: AnnotatorConfig) -> dict[str, Any]:
     params = dict(getattr(config, "backend_params", None) or {})
     params.setdefault("base_url", _provider_base_url(config))
-    params.setdefault("max_requests_per_minute", _optional_config(config, "rpm", 1_000_000))
-    params.setdefault("max_tokens_per_minute", _optional_config(config, "tpm", 10_000_000))
-    params.setdefault("request_timeout", _optional_config(config, "request_timeout", 60))
+    params.setdefault(
+        "max_requests_per_minute", _optional_config(config, "rpm", 1_000_000)
+    )
+    params.setdefault(
+        "max_tokens_per_minute", _optional_config(config, "tpm", 10_000_000)
+    )
+    params.setdefault(
+        "request_timeout", _optional_config(config, "request_timeout", 60)
+    )
     return _clean_dict(params)
 
 
@@ -71,7 +77,11 @@ def _enable_aiohttp_proxy_from_env() -> None:
 
 
 def _provider_from_model(config: AnnotatorConfig) -> str:
-    return config.model.split("/", 1)[0] if config.model and "/" in config.model else "openai"
+    return (
+        config.model.split("/", 1)[0]
+        if config.model and "/" in config.model
+        else "openai"
+    )
 
 
 def _set_provider_api_key(config: AnnotatorConfig) -> None:
@@ -159,7 +169,12 @@ else:
 class CuratorAnnotatorProcessor:
     """Dataset-first batch processor backed by curator.LLM."""
 
-    def __init__(self, config: AnnotatorConfig, output_dir: Path, task_prompt_path: str | None = None):
+    def __init__(
+        self,
+        config: AnnotatorConfig,
+        output_dir: Path,
+        task_prompt_path: str | None = None,
+    ):
         if curator is None:
             raise ImportError(
                 "Curator pipeline requires the optional 'bespokelabs-curator' package."
@@ -167,7 +182,9 @@ class CuratorAnnotatorProcessor:
         self.config = config
         self.output_dir = output_dir
         self.model_dir = model_output_dir(output_dir, config)
-        self.prompt_manager = PromptManager(prompt_path=config.prompt_path or task_prompt_path)
+        self.prompt_manager = PromptManager(
+            prompt_path=config.prompt_path or task_prompt_path
+        )
         self.num_samples = max(config.num_samples or 1, 1)
 
     def build_dataset(self, image_files: Iterable[Path]) -> Dataset:
@@ -181,7 +198,11 @@ class CuratorAnnotatorProcessor:
         dataset = self.build_dataset(image_files)
         self._ensure_output_dirs()
         if len(dataset) == 0:
-            logger.info("All curator results already exist for %s/%s", self.config.name, self.config.model)
+            logger.info(
+                "All curator results already exist for %s/%s",
+                self.config.name,
+                self.config.model,
+            )
             return
 
         logger.info(
@@ -209,7 +230,12 @@ class CuratorAnnotatorProcessor:
         configured = _optional_config(self.config, "curator_working_dir")
         if configured:
             return Path(configured)
-        return self.output_dir / ".curator_dataset_v4" / self.config.name / (self.config.model or "default").replace("/", "__")
+        return (
+            self.output_dir
+            / ".curator_dataset_v4"
+            / self.config.name
+            / (self.config.model or "default").replace("/", "__")
+        )
 
     def _create_llm(self) -> CuratorVisionLLM:
         generation_params = _merged_generation_params(self.config)
@@ -251,7 +277,11 @@ class CuratorAnnotatorProcessor:
 
     def _format_row_result(self, row: dict, sample_id: int | None) -> dict:
         raw_result = row["result"]
-        parsed_result = parse_json_from_text(raw_result) if isinstance(raw_result, str) else raw_result
+        parsed_result = (
+            parse_json_from_text(raw_result)
+            if isinstance(raw_result, str)
+            else raw_result
+        )
         return {
             "result": parsed_result or raw_result,
             "model": self.config.model,
@@ -261,7 +291,9 @@ class CuratorAnnotatorProcessor:
                 {
                     "timestamp": int(time.time()),
                     "sample_id": sample_id,
-                    "temperature": self.config.temperature if sample_id is not None else None,
+                    "temperature": self.config.temperature
+                    if sample_id is not None
+                    else None,
                 }
             ),
         }
