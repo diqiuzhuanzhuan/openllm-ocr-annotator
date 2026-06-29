@@ -9,7 +9,7 @@
 - 🔌 **支持多种 LLM API**：兼容 OpenAI、Claude、Gemini、Qwen、Mistral、Grok 等。
 - 🖼️ **多模态输入**：处理图像与文本组合输入，实现上下文感知标注。
 - 📤 **灵活输出**：支持导出 JSON、YAML、纯文本等多种格式的标注结果。
-- 🤗 **创建 Hugging Face 格式的数据集**：只需在 `config.yaml` 中添加少量配置。
+- 🤗 **创建 Hugging Face 格式的数据集**：通过 Hydra 配置组灵活定制数据集生成。
 - 📊 **评估**：输出字段级准确率和文档级准确率。
 - ⚙️ **轻量化**：基于 Python 构建，依赖精简。
 - 🌍 **开源**：欢迎参与贡献！
@@ -51,64 +51,118 @@ python apps/app.py
 
 ### 使用示例
 
-#### 基础配置
+标注入口现在使用 [Hydra](https://hydra.cc/) 配置组。默认入口会加载 `configs/config.yaml`，通常不再需要传入 `--config` 参数。
 
-在 `examples` 目录中创建 `config.yaml` 文件：
+#### 基础用法
+
+使用默认配置运行：
+
+```bash
+python apps/app.py
+```
+
+从命令行覆盖配置项：
+
+```bash
+python apps/app.py task.max_files=10 task.input_dir=./data/images
+python apps/app.py task.output_dir=./data/outputs dataset=foreign_trade
+```
+
+只打印最终解析后的配置，不执行标注：
+
+```bash
+python apps/app.py --cfg job
+```
+
+#### 配置结构
+
+Hydra 会从 `configs/config.yaml` 组合运行时配置：
 
 ```yaml
-version: "1.0"
-task:
-  # 基础配置
-  # -----------------------------------------------------------------------------
-  task_id: mytask
-  input_dir: "./data/images"           # 原始图像目录
-  output_dir: "./data/outputs"         # 标注结果输出目录
-  max_files: -1                        # 测试完整流程时可设置为 10
+defaults:
+  - task: foreign_trade
+  - annotators@task: foreign_trade_default
+  - ensemble@task: weighted_vote
+  - dataset@task: foreign_trade
+  - _self_
 
+version: "1.0"
+
+hydra:
+  job:
+    chdir: false
+```
+
+任务配置位于 `configs/task/foreign_trade.yaml`：
+
+```yaml
+task_id: foreign_trade_20250519
+input_dir: "./data/images"
+output_dir: "./data/outputs"
+max_files: 20
+num_samples: 1
+```
+
+标注器配置位于 `configs/annotators/foreign_trade_default.yaml`，并通过 `annotators@task` 合并到 `task.annotators`：
+
+```yaml
 annotators:
-  - name: my_annotator
-    model: gpt-4o-mini                  # 或 gpt-4o
-    api_key: your_api_key_here
-    task: vision_extraction
-    type: curator                       # 使用 Curator 标注器
-    base_url: 'http://127.0.0.1:8879/v1' # 自建 OpenAI 兼容 API 服务的地址
-    enabled: true                       # 设置为 false 可禁用此标注器
-    max_retries: 3
-    max_tokens: 1000
-    weight: 1
+  - name: "gpt"
+    type: curator
+    task: "vision_extraction"
+    provider:
+      model_name: "openai/gpt-5"
+      backend: "litellm"
+      backend_params:
+        require_all_responses: false
+        max_tokens_per_minute: 100000000
+      generation_params:
+        max_tokens: 4096
+    weight: 1.0
     output_format: json
-    temperature: null
+    enabled: true
     prompt_path: "./examples/prompt_templates.yaml"
 ```
 
-`prompt_templates.yaml`：
+投票和数据集配置分别放在独立配置组中：
 
 ```yaml
-openai:  # 必须与标注器配置中的 'type' 字段一致
-  vision_extraction: # 必须与标注器配置中的 'task' 字段一致
+# configs/ensemble/weighted_vote.yaml
+ensemble:
+  enabled: true
+  method: "weighted_vote"
+  min_confidence: 0.5
+  agreement_threshold: 0.6
+  output_format: json
+```
+
+```yaml
+# configs/dataset/foreign_trade.yaml
+dataset:
+  enabled: true
+  name: "foreign_trade_20250519"
+  version: "1.0"
+  description: "Dataset for foreign trade document analysis."
+  format: json
+  output_dir: "./datasets/foreign_trade_20250519"
+  split_ratio: 0.9
+  num_samples: -1
+```
+
+`prompt_templates.yaml` 仍然通过 `prompt_path` 配置：
+
+```yaml
+openai:
+  vision_extraction:
     system: |
       You are an expert in foreign trade document analysis. Your task is to extract key information
-      from Chinese foreign trade documents with high precision. Pay special attention to:
-      1. Document identifiers and numbers
-      2. Dates in standard formats
-      3. Company names and addresses
-      4. Transaction amounts and currencies
-      5. Geographic information
+      from Chinese foreign trade documents with high precision.
 
     user: |
       Analyze this foreign trade document and extract the following specific fields:......
 ```
 
-**注意**：所有标注结果都会存储在 `{task.output_dir}/{annotator.name}/{annotator.model}` 中，因此可以配置多个标注器。
-
-**推荐直接参考 `examples` 目录中提供的 `config.yaml`。**
-
-#### 基础用法
-
-```bash
-python apps/app.py
-python apps/app.py task.max_files=10 task.input_dir=./data/images
-```
+**注意**：所有标注结果都会存储在 `{task.output_dir}/{annotator.name}/{annotator.model}` 中。可以在 `configs/annotators/*.yaml` 中添加多个标注器，并通过命令行切换配置组。
 
 #### 验证标注结果（抽样并检查标注）
 

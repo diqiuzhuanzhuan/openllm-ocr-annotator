@@ -9,7 +9,7 @@
 - 🔌 **Supports Multiple LLM APIs**: Compatible with OpenAI, Claude, Gemini, Qwen, Mistral, Grok, etc.
 - 🖼️ **Multimodal Input**: Process image + text pairs for richer context-aware annotation.
 - 📤 **Flexible Output**: Export annotations in multiple formats (JSON, YAML, plain text, etc.).
-- 🤗 **Create huggingface format dataset**: Only a few lines of configuration in config.yaml.
+- 🤗 **Create huggingface format dataset**: Hydra configuration groups make dataset generation easy to customize.
 - 📊 **Evaluate**: Output field-level accuracy and document-level accuracy.
 - ⚙️ **Lightweight**: Built in Python with minimal dependencies.
 - 🌍 **Open Source**: Contributions welcome!
@@ -49,60 +49,119 @@ python apps/app.py
 ```
 
 ### Usage Examples
-#### Basic Usage
-Create a 'config.yaml' file in the 'examples' directory:
-```yaml
-version: "1.0"
-task:
-  # Basic Configuration
-  # -----------------------------------------------------------------------------
-  task_id: mytask
-  input_dir: "./data/images"           # Source image directory
-  output_dir: "./data/outputs"         # Output directory for annotations
-  max_files: -1                       # Set as 10 when to test overall process.
 
+The annotator now uses [Hydra](https://hydra.cc/) configuration groups. The default entry point loads `configs/config.yaml`, so most runs do not need a `--config` argument.
+
+#### Basic Usage
+
+Run with the default configuration:
+
+```bash
+python apps/app.py
+```
+
+Override values from the command line:
+
+```bash
+python apps/app.py task.max_files=10 task.input_dir=./data/images
+python apps/app.py task.output_dir=./data/outputs dataset=foreign_trade
+```
+
+Print the resolved job configuration without running annotation:
+
+```bash
+python apps/app.py --cfg job
+```
+
+#### Configuration Layout
+
+Hydra composes the runtime configuration from `configs/config.yaml`:
+
+```yaml
+defaults:
+  - task: foreign_trade
+  - annotators@task: foreign_trade_default
+  - ensemble@task: weighted_vote
+  - dataset@task: foreign_trade
+  - _self_
+
+version: "1.0"
+
+hydra:
+  job:
+    chdir: false
+```
+
+The task settings live in `configs/task/foreign_trade.yaml`:
+
+```yaml
+task_id: foreign_trade_20250519
+input_dir: "./data/images"
+output_dir: "./data/outputs"
+max_files: 20
+num_samples: 1
+```
+
+Annotators live in `configs/annotators/foreign_trade_default.yaml` and are merged under `task.annotators` by `annotators@task`:
+
+```yaml
 annotators:
-  - name: my_annotator
-    model: gpt-4o-mini  # or gpt-4o
-    api_key: your_api_key_here
-    task: vision_extraction
-    type: curator                # Use the Curator annotator
-    base_url: 'http://127.0.0.1:8879/v1'   # If you set up your own OpenAI compatible API server
-    enabled: true                # Disable this annotator by setting to false
-    max_retries: 3
-    max_tokens: 1000
-    weight: 1
+  - name: "gpt"
+    type: curator
+    task: "vision_extraction"
+    provider:
+      model_name: "openai/gpt-5"
+      backend: "litellm"
+      backend_params:
+        require_all_responses: false
+        max_tokens_per_minute: 100000000
+      generation_params:
+        max_tokens: 4096
+    weight: 1.0
     output_format: json
-    temperature: null
+    enabled: true
     prompt_path: "./examples/prompt_templates.yaml"
 ```
 
-prompt_templates.yaml:
+Ensemble and dataset options are configured separately:
 
 ```yaml
-openai:  # must be the same as the 'type' field in the annotator configuration
-  vision_extraction: # must be the same as the 'task' field in the annotator configuration
+# configs/ensemble/weighted_vote.yaml
+ensemble:
+  enabled: true
+  method: "weighted_vote"
+  min_confidence: 0.5
+  agreement_threshold: 0.6
+  output_format: json
+```
+
+```yaml
+# configs/dataset/foreign_trade.yaml
+dataset:
+  enabled: true
+  name: "foreign_trade_20250519"
+  version: "1.0"
+  description: "Dataset for foreign trade document analysis."
+  format: json
+  output_dir: "./datasets/foreign_trade_20250519"
+  split_ratio: 0.9
+  num_samples: -1
+```
+
+`prompt_templates.yaml` is still configured through `prompt_path`:
+
+```yaml
+openai:
+  vision_extraction:
     system: |
       You are an expert in foreign trade document analysis. Your task is to extract key information
-      from Chinese foreign trade documents with high precision. Pay special attention to:
-      1. Document identifiers and numbers
-      2. Dates in standard formats
-      3. Company names and addresses
-      4. Transaction amounts and currencies
-      5. Geographic information
+      from Chinese foreign trade documents with high precision.
 
     user: |
       Analyze this foreign trade document and extract the following specific fields:......
-
 ```
-**Note**: All annotation results will be stored in '{task.output_dir}/{annotator.name}/{annotator.model}'. So you can set up many annotators.
 
-**Actually, refering to config.yaml provided in the 'examples' directory is the best choice.**
-#### basic useage
-```python
-python apps/app.py
-python apps/app.py task.max_files=10 task.input_dir=./data/images
-```
+**Note**: annotation results are stored under `{task.output_dir}/{annotator.name}/{annotator.model}`. You can add more annotators to `configs/annotators/*.yaml` and switch between them from the command line.
 
 #### verify the annotations (sample n samples and verify the annotations)
 ```python
