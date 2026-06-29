@@ -1,9 +1,0 @@
-openai
-requests
-pillow
-pyyaml
-hydra-core>=1.3.3
-matplotlib
-tqdm
-colorlog
-datasets>=2.15.0  # For HuggingFace dataset support
