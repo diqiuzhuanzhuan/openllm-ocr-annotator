@@ -13,7 +13,7 @@ from openllm_ocr_annotator.pipeline import run_batch_annotation
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(config: DictConfig) -> None:
-    load_dotenv()
+    load_dotenv(override=True)
     logging.getLogger("litellm").setLevel(logging.WARNING)
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     config_manager = AnnotatorConfigManager.from_omegaconf(config)
