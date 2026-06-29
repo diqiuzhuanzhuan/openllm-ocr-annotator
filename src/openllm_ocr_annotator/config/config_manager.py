@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 from dataclasses import dataclass, fields
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import yaml
 from pathlib import Path
 from openllm_ocr_annotator.utils.logger import setup_logger
@@ -250,6 +250,16 @@ class AnnotatorConfigManager:
             config = yaml.safe_load(f)
 
         return cls(config)
+
+    @classmethod
+    def from_omegaconf(cls, config: Any) -> "AnnotatorConfigManager":
+        """Create configuration manager from a Hydra/OmegaConf config."""
+        from omegaconf import OmegaConf
+
+        resolved_config = OmegaConf.to_container(config, resolve=True)
+        if not isinstance(resolved_config, dict):
+            raise TypeError("OmegaConf config must resolve to a dictionary.")
+        return cls(resolved_config)
 
     def _validate_config_keys(
         self, config_dict: Dict, dataclass_type: type, path: str = ""

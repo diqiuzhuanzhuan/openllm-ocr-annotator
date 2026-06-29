@@ -1,0 +1,48 @@
+annotators:
+  - name: "gpt"
+    type: curator
+    task: "vision_extraction"
+    provider:
+      model_name: "openai/gpt-5"
+      backend: "litellm"
+      backend_params:
+        require_all_responses: false
+        max_tokens_per_minute: 100000000
+      generation_params:
+        max_tokens: 4096
+    weight: 1.0
+    output_format: json
+    enabled: true
+    prompt_path: "./examples/prompt_templates.yaml"
+
+  - name: "gpt"
+    type: curator
+    task: "vision_extraction"
+    provider:
+      model_name: "openai/gpt-5.5"
+      backend: "litellm"
+      backend_params:
+        require_all_responses: false
+        max_tokens_per_minute: 100000000
+      generation_params:
+        max_tokens: 4096
+    weight: 1.0
+    output_format: json
+    enabled: true
+    prompt_path: "./examples/prompt_templates.yaml"
+
+  - name: "google"
+    type: curator
+    task: "vision_extraction"
+    provider:
+      model_name: "gemini/gemini-3.1-pro-preview"
+      backend: "litellm"
+      backend_params:
+        require_all_responses: false
+        max_tokens_per_minute: 100000000
+      generation_params:
+        max_tokens: 4096
+    weight: 1.0
+    output_format: json
+    enabled: true
+    prompt_path: "./examples/prompt_templates.yaml"

@@ -27,7 +27,7 @@ flowchart LR
     Evaluation --> Reports[准确率报告]
 ```
 
-主要的命令行入口是 `apps/app.py`。它加载 YAML 配置，并将完整工作流交由 `run_batch_annotation` 执行。
+主要的命令行入口是 `apps/app.py`。它从 `configs/` 加载 Hydra 配置，解析命令行覆盖项，并将完整工作流交由 `run_batch_annotation` 执行。
 
 ## 包结构
 

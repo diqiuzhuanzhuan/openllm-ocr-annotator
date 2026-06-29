@@ -1,0 +1,5 @@
+task_id: foreign_trade_20250519
+input_dir: "./data/images"
+output_dir: "./data/outputs"
+max_files: 20
+num_samples: 1

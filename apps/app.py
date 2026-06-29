@@ -1,29 +1,22 @@
 # SPDX-FileCopyrightText: 2025 Loong Ma
 # SPDX-License-Identifier: MIT
 
-import argparse
 import logging
 
+import hydra
 from dotenv import load_dotenv
+from omegaconf import DictConfig
+
 from openllm_ocr_annotator.config.config_manager import AnnotatorConfigManager
 from openllm_ocr_annotator.pipeline import run_batch_annotation
 
-argparser = argparse.ArgumentParser(description="OpenLLM OCR Annotator")
 
-argparser.add_argument(
-    "--config",
-    type=str,
-    default="examples/config.yaml",
-    help="Path to the annotator config file.",
-)
-
-
-if __name__ == "__main__":
+@hydra.main(version_base=None, config_path="../configs", config_name="config")
+def main(config: DictConfig) -> None:
     load_dotenv()
     logging.getLogger("litellm").setLevel(logging.WARNING)
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
-    args = argparser.parse_args()
-    config_manager = AnnotatorConfigManager.from_file(args.config)
+    config_manager = AnnotatorConfigManager.from_omegaconf(config)
 
     annotator_configs = config_manager.get_enabled_annotators()
     weights = config_manager.get_annotator_weights()
@@ -42,3 +35,7 @@ if __name__ == "__main__":
         dataset_split_ratio=dataset_config.split_ratio,
         num_samples=task_config.num_samples,
     )
+
+
+if __name__ == "__main__":
+    main()

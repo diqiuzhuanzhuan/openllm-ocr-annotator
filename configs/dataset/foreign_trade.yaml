@@ -1,0 +1,9 @@
+dataset:
+  enabled: true
+  name: "foreign_trade_20250519"
+  version: "1.0"
+  description: "Dataset for foreign trade document analysis."
+  format: json
+  output_dir: "./datasets/foreign_trade_20250519"
+  split_ratio: 0.9
+  num_samples: -1

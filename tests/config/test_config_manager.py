@@ -94,6 +94,15 @@ class TestAnnotatorConfigManager:
         with pytest.raises(FileNotFoundError):
             AnnotatorConfigManager.from_file(tmp_path / "nonexistent.yaml")
 
+    def test_from_omegaconf_loads_correctly(self, tmp_yaml_config):
+        from omegaconf import OmegaConf
+
+        config = OmegaConf.load(tmp_yaml_config)
+        manager = AnnotatorConfigManager.from_omegaconf(config)
+
+        assert manager.task.task_id == "test_task"
+        assert len(manager.task.annotators) == 2
+
     def test_get_enabled_annotators(self, tmp_yaml_config):
         manager = AnnotatorConfigManager.from_file(tmp_yaml_config)
         enabled = manager.get_enabled_annotators()

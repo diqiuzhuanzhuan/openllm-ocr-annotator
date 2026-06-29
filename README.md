@@ -100,7 +100,8 @@ openai:  # must be the same as the 'type' field in the annotator configuration
 **Actually, refering to config.yaml provided in the 'examples' directory is the best choice.**
 #### basic useage
 ```python
-python apps/app.py --config examples/config.yaml
+python apps/app.py
+python apps/app.py task.max_files=10 task.input_dir=./data/images
 ```
 
 #### verify the annotations (sample n samples and verify the annotations)

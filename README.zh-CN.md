@@ -106,7 +106,8 @@ openai:  # 必须与标注器配置中的 'type' 字段一致
 #### 基础用法
 
 ```bash
-python apps/app.py --config examples/config.yaml
+python apps/app.py
+python apps/app.py task.max_files=10 task.input_dir=./data/images
 ```
 
 #### 验证标注结果（抽样并检查标注）

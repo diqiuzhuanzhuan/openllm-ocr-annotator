@@ -1,0 +1,12 @@
+defaults:
+  - task: foreign_trade
+  - annotators@task: foreign_trade_default
+  - ensemble@task: weighted_vote
+  - dataset@task: foreign_trade
+  - _self_
+
+version: "1.0"
+
+hydra:
+  job:
+    chdir: false

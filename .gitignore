@@ -182,3 +182,4 @@ cython_debug/
 
 # If you are using a data file that is not in the repository, you can add it to .gitignore
 data
+outputs

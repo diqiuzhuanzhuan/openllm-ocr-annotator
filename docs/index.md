@@ -15,7 +15,7 @@ OpenLLM OCR Annotator is an OCR dataset annotation tool powered by multimodal la
 
 ```bash
 just install
-python apps/app.py --config examples/config.yaml
+python apps/app.py
 ```
 
 Run the complete quality-assurance suite:

@@ -27,7 +27,7 @@ flowchart LR
     Evaluation --> Reports[Accuracy Reports]
 ```
 
-The main command-line entry point is `apps/app.py`. It loads a YAML configuration and delegates the complete workflow to `run_batch_annotation`.
+The main command-line entry point is `apps/app.py`. It loads the Hydra configuration from `configs/`, resolves command-line overrides, and delegates the complete workflow to `run_batch_annotation`.
 
 ## Package Structure
 
