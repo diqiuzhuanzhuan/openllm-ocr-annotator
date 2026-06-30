@@ -99,7 +99,7 @@ default:
     user: "Please analyze this document's layout and identify all structural elements."
 
 # Model specific templates - will override default if specified
-openai:
+curator:
   vision_extraction:
     system: |
       You are an expert in foreign trade document analysis. Your task is to extract key information

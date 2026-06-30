@@ -31,11 +31,11 @@ annotators:
     enabled: true
     prompt_path: "./examples/prompt_templates.yaml"
 
-  - name: "google"
+  - name: "openai"
     type: curator
     task: "vision_extraction"
     provider:
-      model_name: "gemini/gemini-3.1-pro-preview"
+      model_name: "openai/gpt-5.4"
       backend: "litellm"
       backend_params:
         require_all_responses: false

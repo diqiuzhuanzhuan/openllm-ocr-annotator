@@ -152,7 +152,7 @@ dataset:
 `prompt_templates.yaml` 仍然通过 `prompt_path` 配置：
 
 ```yaml
-openai:
+curator:
   vision_extraction:
     system: |
       You are an expert in foreign trade document analysis. Your task is to extract key information
