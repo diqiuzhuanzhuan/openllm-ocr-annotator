@@ -122,15 +122,25 @@ if curator is not None:
     class CuratorVisionLLM(curator.LLM):
         """Curator LLM that converts image dataset rows into multimodal prompts."""
 
-        def __init__(self, *args, prompt_manager: PromptManager, task: str, **kwargs):
+        def __init__(
+            self,
+            *args,
+            prompt_manager: PromptManager,
+            annotator_type: str,
+            task: str,
+            **kwargs,
+        ):
             self.prompt_manager = prompt_manager
+            self.annotator_type = annotator_type
             self.task = task
             super().__init__(*args, **kwargs)
 
         def prompt(self, row: dict):
             variables = json.loads(row.get("variables") or "{}")
             prompts = self.prompt_manager.get_prompt(
-                model="openai", task=self.task, variables=variables or None
+                annotator_type=self.annotator_type,
+                task=self.task,
+                variables=variables or None,
             )
             prompt_text = f"{prompts['system']}\n\n{prompts['user']}"
             mime_type, _ = mimetypes.guess_type(row["image_path"])
@@ -247,6 +257,7 @@ class CuratorAnnotatorProcessor:
             generation_params=generation_params,
             backend_params=backend_params or None,
             prompt_manager=self.prompt_manager,
+            annotator_type=self.config.type,
             task=self.config.task,
         )
         self._patch_token_estimation(llm)

@@ -30,6 +30,7 @@ class CuratorAnnotator(BaseAnnotator, _CuratorLLMBase):
             name=config.name,
             api_key=config.api_key,
             model=config.model,
+            annotator_type=config.type,
             task=config.task,
             max_tokens=config.max_tokens,
             temperature=config.temperature,
@@ -44,6 +45,7 @@ class CuratorAnnotator(BaseAnnotator, _CuratorLLMBase):
         api_key: Optional[str] = None,
         name: str = "curator_annotator",
         model: Optional[str] = "gpt-4o-mini",
+        annotator_type: str = "curator",
         task: str = "vision_extraction",
         max_tokens: Optional[int] = 4096,
         temperature: Optional[float] = None,
@@ -65,6 +67,7 @@ class CuratorAnnotator(BaseAnnotator, _CuratorLLMBase):
         self.base_url = base_url or os.getenv("OPENAI_BASE_URL")
         self.name = name
         self.model = model or "gpt-4o-mini"
+        self.annotator_type = annotator_type
         self.task = task
         self.max_tokens = max_tokens
         self.temperature = temperature
@@ -114,7 +117,9 @@ class CuratorAnnotator(BaseAnnotator, _CuratorLLMBase):
     def prompt(self, input: dict):
         variables = input.get("variables") or None
         prompts = self.prompt_manager.get_prompt(
-            model="openai", task=self.task, variables=variables
+            annotator_type=self.annotator_type,
+            task=self.task,
+            variables=variables,
         )
         image_b64 = self._encode_image(input["image_path"])
         return [

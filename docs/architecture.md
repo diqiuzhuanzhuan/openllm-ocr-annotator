@@ -123,7 +123,7 @@ Currently instantiated adapter types are:
 
 Curator handles provider routing through its configured backend and provider parameters.
 
-Before an API call, images are encoded as base64 where required. Oversized images are resized while preserving their aspect ratio. Prompt templates are loaded through `PromptManager`, with provider-specific templates falling back to defaults.
+Before an API call, images are encoded as base64 where required. Oversized images are resized while preserving their aspect ratio. Prompt templates are selected by annotator type and task through `PromptManager`, with type-specific templates falling back to defaults.
 
 ## Annotation Contract
 

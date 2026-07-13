@@ -33,6 +33,7 @@ class TestFromConfig:
                 name="curator_test",
                 api_key="test-api-key",
                 model="gpt-4o-mini",
+                annotator_type="curator",
                 task="vision_extraction",
                 max_tokens=4096,
                 temperature=None,

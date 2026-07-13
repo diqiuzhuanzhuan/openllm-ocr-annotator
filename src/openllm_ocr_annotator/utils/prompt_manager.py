@@ -49,12 +49,15 @@ class PromptManager:
         return template
 
     def get_prompt(
-        self, model: str, task: str, variables: Optional[Dict[str, str]] = None
+        self,
+        annotator_type: str,
+        task: str,
+        variables: Optional[Dict[str, str]] = None,
     ) -> Dict[str, str]:
         """Get prompt template and substitute variables.
 
         Args:
-            model: Model name (e.g., 'openai')
+            annotator_type: Annotator type (e.g., 'curator')
             task: Task name (e.g., 'vision_extraction')
             variables: Dictionary of variable names and values for substitution
 
@@ -62,20 +65,20 @@ class PromptManager:
             Dict containing processed system and user prompts
         """
         # Get base template
-        if model in self.config and task in self.config[model]:
-            template = self.config[model][task]
+        if annotator_type in self.config and task in self.config[annotator_type]:
+            template = self.config[annotator_type][task]
         elif "default" in self.config and task in self.config["default"]:
             template = self.config["default"][task]
             logger.warning(
-                f"Using default prompt template for task {task} as no specific model template found."
-            )
-        elif "openai" in self.config and task in self.config["openai"]:
-            template = self.config["openai"][task]
-            logger.warning(
-                f"Using openai prompt template for task {task} as no specific model template found."
+                "Using default prompt template for task %s because no template "
+                "exists for annotator type %s.",
+                task,
+                annotator_type,
             )
         else:
-            raise ValueError(f"No template found for model={model}, task={task}")
+            raise ValueError(
+                f"No template found for annotator_type={annotator_type}, task={task}"
+            )
 
         # merge default variables with custom variables
         merged_variables = self.default_variables.copy()

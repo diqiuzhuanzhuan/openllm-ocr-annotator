@@ -98,7 +98,7 @@ default:
       Return the results in JSON format.
     user: "Please analyze this document's layout and identify all structural elements."
 
-# Model specific templates - will override default if specified
+# Annotator-type-specific templates override the default for the same task.
 curator:
   vision_extraction:
     system: |
