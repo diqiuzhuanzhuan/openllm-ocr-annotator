@@ -159,7 +159,7 @@ def test_annotator_config_from_curator_provider_params():
     assert config.generation_params == {"max_tokens": 4096}
 
 
-def test_function_call_generation_config_normalizes_to_task(tmp_path):
+def test_legacy_function_call_generation_config_is_rejected(tmp_path):
     config_path = tmp_path / "config.yaml"
     config_path.write_text(
         """
@@ -182,17 +182,25 @@ function_call_generation:
 """
     )
 
-    manager = AnnotatorConfigManager.from_file(config_path)
-    task = manager.get_task_config()
-    annotator = manager.get_enabled_annotators()[0]
+    with pytest.raises(ValueError, match="function_call_generation"):
+        AnnotatorConfigManager.from_file(config_path)
 
-    assert task.task_id == "function_call_gpt_4o"
-    assert task.input_dir == "data/tool_query"
-    assert task.max_files == -1
-    assert task.ensemble.enabled is False
-    assert annotator.type == "curator"
-    assert annotator.model == "gpt-4o"
-    assert annotator.backend == "openai"
-    assert annotator.output_format == "jsonl"
-    assert annotator.tpm == 8_000_000
-    assert annotator.max_tokens == 4096
+
+def test_unknown_fields_are_rejected(tmp_yaml_config):
+    import yaml
+
+    config = yaml.safe_load(tmp_yaml_config.read_text())
+    config["task"]["max_file"] = 1
+    tmp_yaml_config.write_text(yaml.safe_dump(config))
+
+    with pytest.raises(ValueError, match="max_file"):
+        AnnotatorConfigManager.from_file(tmp_yaml_config)
+
+
+def test_dataset_from_dict_preserves_configured_output_directory(tmp_path):
+    from openllm_ocr_annotator.config.config_manager import DatasetConfig
+
+    output_dir = tmp_path / "dataset-root"
+    config = DatasetConfig.from_dict({"name": "sample", "output_dir": output_dir})
+
+    assert config.output_dir == str(output_dir)

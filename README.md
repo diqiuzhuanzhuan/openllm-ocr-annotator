@@ -79,6 +79,7 @@ Hydra composes the runtime configuration from `configs/config.yaml`:
 
 ```yaml
 defaults:
+  - base_schema
   - task: foreign_trade
   - annotators@task: foreign_trade_default
   - ensemble@task: weighted_vote
@@ -91,6 +92,9 @@ hydra:
   job:
     chdir: false
 ```
+
+The registered structured schema validates field names and value types during
+composition. Unknown options fail fast instead of being silently ignored.
 
 The task settings live in `configs/task/foreign_trade.yaml`:
 
@@ -147,6 +151,10 @@ dataset:
   split_ratio: 0.9
   num_samples: -1
 ```
+
+`dataset.output_dir` is an independent output root; it is not joined to
+`task.output_dir`. The converted Hugging Face dataset is written below its
+`dataset/` subdirectory.
 
 `prompt_templates.yaml` is still configured through `prompt_path`:
 

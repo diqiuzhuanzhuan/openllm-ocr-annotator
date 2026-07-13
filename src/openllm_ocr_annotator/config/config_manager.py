@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Loong Ma
 # SPDX-License-Identifier: MIT
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from typing import Any, Dict, List, Optional
 import yaml
 from pathlib import Path
@@ -9,6 +9,10 @@ from openllm_ocr_annotator.utils.logger import setup_logger
 from enum import Enum
 
 logger = setup_logger(__name__)
+
+
+def _first_not_none(*values: Any) -> Any:
+    return next((value for value in values if value is not None), None)
 
 
 class EnsembleStrategy(Enum):
@@ -35,16 +39,16 @@ class EnsembleStrategy(Enum):
 class AnnotatorConfig:
     """Configuration for a single annotator"""
 
-    name: str
-    type: str
-    task: str
+    name: str = "default_annotator"
+    type: str = "curator"
+    task: str = "ocr"
     api_key: Optional[str] = None
     model: Optional[str] = None
     base_url: Optional[str] = None
     weight: float = 1.0
     output_format: str = "json"
     max_tokens: Optional[int] = None
-    temperature: Optional[float] = 0
+    temperature: Optional[float] = None
     enabled: bool = True
     prompt_path: Optional[str] = None
     num_samples: Optional[int] = (
@@ -79,26 +83,32 @@ class AnnotatorConfig:
             name=config.get("name", "default_annotator"),
             type=annotator_type,
             task=config.get("task", "ocr"),
-            api_key=config.get("api_key", provider.get("api_key", None)),
-            model=config.get("model", provider.get("model_name", None)),
-            base_url=config.get("base_url", backend_params.get("base_url", None)),
+            api_key=_first_not_none(config.get("api_key"), provider.get("api_key")),
+            model=_first_not_none(config.get("model"), provider.get("model_name")),
+            base_url=_first_not_none(
+                config.get("base_url"), backend_params.get("base_url")
+            ),
             weight=config.get("weight", 1.0),
             output_format=config.get("output_format", "json"),
-            max_tokens=config.get(
-                "max_tokens", generation_params.get("max_tokens", None)
+            max_tokens=_first_not_none(
+                config.get("max_tokens"), generation_params.get("max_tokens")
             ),
-            temperature=config.get(
-                "temperature", generation_params.get("temperature", None)
+            temperature=_first_not_none(
+                config.get("temperature"), generation_params.get("temperature")
             ),
             enabled=config.get("enabled", True),
             prompt_path=config.get("prompt_path", None),
             num_samples=config.get("num_samples", 1),
-            backend=config.get("backend", provider.get("backend", None)),
-            rpm=config.get("rpm", backend_params.get("max_requests_per_minute", None)),
-            tpm=config.get("tpm", backend_params.get("max_tokens_per_minute", None)),
+            backend=_first_not_none(config.get("backend"), provider.get("backend")),
+            rpm=_first_not_none(
+                config.get("rpm"), backend_params.get("max_requests_per_minute")
+            ),
+            tpm=_first_not_none(
+                config.get("tpm"), backend_params.get("max_tokens_per_minute")
+            ),
             estimated_input_tokens=config.get("estimated_input_tokens", None),
-            request_timeout=config.get(
-                "request_timeout", backend_params.get("request_timeout", None)
+            request_timeout=_first_not_none(
+                config.get("request_timeout"), backend_params.get("request_timeout")
             ),
             curator_working_dir=config.get("curator_working_dir", None),
             provider=provider or None,
@@ -111,9 +121,11 @@ class AnnotatorConfig:
 class EnsembleConfig:
     """Configuration for ensemble voting"""
 
-    method: EnsembleStrategy
-    min_confidence: float
-    agreement_threshold: float
+    # Kept as Any in the Hydra schema so CLI values use the public lowercase names;
+    # from_dict converts it to EnsembleStrategy for runtime use.
+    method: Any = "weighted_vote"
+    min_confidence: float = 0.0
+    agreement_threshold: float = 0.0
     output_format: str = "json"
     enabled: bool = True
 
@@ -137,7 +149,7 @@ class DatasetConfig:
     version: str = "1.0"
     description: str = ""
     format: str = "json"
-    output_dir: str | Path = "./datasets"
+    output_dir: str = "./datasets"
     split_ratio: float = 0.9
     num_samples: int = -1  # -1 means use all available samples
     enabled: bool = True
@@ -150,8 +162,7 @@ class DatasetConfig:
             version=config.get("version", "1.0"),
             description=config.get("description", ""),
             format=config.get("format", "json"),
-            output_dir=Path(config.get("output_dir", "./datasets"))
-            / Path(config.get("name", "default_dataset")),
+            output_dir=str(config.get("output_dir", "./datasets")),
             split_ratio=config.get("split_ratio", 0.8),
             num_samples=config.get("num_samples", -1),
             enabled=config.get("enabled", True),
@@ -162,13 +173,13 @@ class DatasetConfig:
 class TaskConfig:
     """Main task configuration"""
 
-    task_id: str
-    input_dir: str
-    output_dir: str
-    prompt_path: str
-    annotators: List[AnnotatorConfig]
-    ensemble: EnsembleConfig
-    dataset: DatasetConfig
+    task_id: str = "default_task"
+    input_dir: str = ""
+    output_dir: str = "./data/outputs"
+    prompt_path: Optional[str] = None
+    annotators: List[AnnotatorConfig] = field(default_factory=list)
+    ensemble: EnsembleConfig = field(default_factory=EnsembleConfig)
+    dataset: DatasetConfig = field(default_factory=DatasetConfig)
     max_files: int = -1  # -1 means no limit
     num_samples: int = 1  # Number of samples per image
 
@@ -178,6 +189,21 @@ class TaskConfig:
         return cls(**config)
 
 
+@dataclass
+class AppConfig:
+    """Hydra's structured root configuration."""
+
+    version: str = "1.0"
+    task: TaskConfig = field(default_factory=TaskConfig)
+
+
+def register_config_store() -> None:
+    """Register the root schema before Hydra composes configuration groups."""
+    from hydra.core.config_store import ConfigStore
+
+    ConfigStore.instance().store(name="base_schema", node=AppConfig)
+
+
 class AnnotatorConfigManager:
     """Manager for handling annotator configurations"""
 
@@ -185,52 +211,26 @@ class AnnotatorConfigManager:
         self.version = config.get("version", "1.0")
         self.task = self._parse_task_config(self._normalize_task_config(config))
 
+    @staticmethod
+    def _to_structured_dict(config: Any) -> Dict:
+        """Merge input with the structured schema and return resolved primitives."""
+        from omegaconf import OmegaConf
+        from omegaconf.errors import OmegaConfBaseException
+
+        try:
+            structured = OmegaConf.merge(OmegaConf.structured(AppConfig), config)
+            resolved = OmegaConf.to_container(structured, resolve=True)
+        except OmegaConfBaseException as exc:
+            raise ValueError(f"Invalid configuration: {exc}") from exc
+        if not isinstance(resolved, dict):
+            raise TypeError("Configuration must resolve to a dictionary.")
+        return resolved
+
     def _normalize_task_config(self, config: Dict) -> Dict:
-        """Normalize supported top-level config shapes into TaskConfig input."""
+        """Return the current task configuration shape."""
         if "task" in config:
             return config["task"]
-        if "function_call_generation" in config:
-            return self._function_call_generation_to_task(
-                config["function_call_generation"]
-            )
-        raise KeyError(
-            "Config must include either 'task' or 'function_call_generation'."
-        )
-
-    def _function_call_generation_to_task(self, config: Dict) -> Dict:
-        provider = config.get("provider") or {}
-        return {
-            "task_id": config.get("name", "function_call_generation"),
-            "input_dir": config.get("function_dataset"),
-            "output_dir": config.get("output_dir", "data"),
-            "prompt_path": config.get("prompt_path"),
-            "max_files": config.get("max_num", -1),
-            "annotators": [
-                {
-                    "name": config.get("name", "function_call_generation"),
-                    "type": config.get("type", "curator"),
-                    "task": config.get("task", "function_call_generation"),
-                    "enabled": config.get("enable", True),
-                    "output_format": config.get("output_format", "jsonl"),
-                    "prompt_path": config.get("prompt_path"),
-                    "provider": provider,
-                }
-            ],
-            "ensemble": {
-                "enabled": False,
-                "method": "weighted_vote",
-                "min_confidence": 0.0,
-                "agreement_threshold": 0.0,
-                "output_format": config.get("output_format", "jsonl"),
-            },
-            "dataset": {
-                "enabled": False,
-                "name": config.get("name", "function_call_generation"),
-                "format": config.get("output_format", "jsonl"),
-                "output_dir": config.get("output_dir", "data"),
-                "num_samples": config.get("max_num", -1),
-            },
-        }
+        raise KeyError("Config must include 'task'.")
 
     @classmethod
     def from_file(cls, config_path: str | Path) -> "AnnotatorConfigManager":
@@ -249,17 +249,12 @@ class AnnotatorConfigManager:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        return cls(config)
+        return cls(cls._to_structured_dict(config))
 
     @classmethod
     def from_omegaconf(cls, config: Any) -> "AnnotatorConfigManager":
         """Create configuration manager from a Hydra/OmegaConf config."""
-        from omegaconf import OmegaConf
-
-        resolved_config = OmegaConf.to_container(config, resolve=True)
-        if not isinstance(resolved_config, dict):
-            raise TypeError("OmegaConf config must resolve to a dictionary.")
-        return cls(resolved_config)
+        return cls(cls._to_structured_dict(config))
 
     def _validate_config_keys(
         self, config_dict: Dict, dataclass_type: type, path: str = ""
@@ -277,9 +272,9 @@ class AnnotatorConfigManager:
         # Find unknown fields
         unknown_fields = actual_fields - valid_fields
         if unknown_fields:
-            logger.warning(
-                f"Unknown configuration fields found in {path or 'root'}: {unknown_fields}. "
-                f"Valid fields are: {valid_fields}"
+            raise ValueError(
+                f"Unknown configuration fields in {path or 'root'}: "
+                f"{sorted(unknown_fields)}. Valid fields are: {sorted(valid_fields)}"
             )
 
     def _parse_task_config(self, task_config: Dict) -> TaskConfig:
@@ -311,27 +306,13 @@ class AnnotatorConfigManager:
 
         # Parse and validate ensemble config
         self._validate_config_keys(task_config["ensemble"], EnsembleConfig, "ensemble")
-        ensemble = EnsembleConfig(
-            method=EnsembleStrategy.from_str(task_config["ensemble"]["method"]),
-            min_confidence=task_config["ensemble"]["min_confidence"],
-            agreement_threshold=task_config["ensemble"]["agreement_threshold"],
-            output_format=task_config["ensemble"].get("output_format", "json"),
-            enabled=task_config["ensemble"].get("enabled", True),
-        )
+        ensemble = EnsembleConfig.from_dict(task_config["ensemble"])
 
         # Parse and validate dataset config
         dataset_config = task_config.get("dataset", {})
         self._validate_config_keys(dataset_config, DatasetConfig, "dataset")
-        dataset = DatasetConfig(
-            name=dataset_config.get("name", task_config["task_id"]),
-            version=dataset_config.get("version", "1.0"),
-            description=dataset_config.get("description", ""),
-            format=dataset_config.get("format", "json"),
-            output_dir=dataset_config.get("output_dir", "./datasets"),
-            split_ratio=dataset_config.get("split_ratio", 0.8),
-            num_samples=dataset_config.get("num_samples", -1),
-            enabled=dataset_config.get("enabled", True),
-        )
+        dataset_config.setdefault("name", task_config.get("task_id", "default_task"))
+        dataset = DatasetConfig.from_dict(dataset_config)
 
         return TaskConfig(
             task_id=task_config.get("task_id", "default_task"),

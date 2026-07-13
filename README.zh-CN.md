@@ -80,6 +80,7 @@ Hydra 会从 `configs/config.yaml` 组合运行时配置：
 
 ```yaml
 defaults:
+  - base_schema
   - task: foreign_trade
   - annotators@task: foreign_trade_default
   - ensemble@task: weighted_vote
@@ -92,6 +93,9 @@ hydra:
   job:
     chdir: false
 ```
+
+注册的结构化 schema 会在组合阶段校验字段名和字段类型；未知配置项会直接报错，
+不会再被静默忽略。
 
 任务配置位于 `configs/task/foreign_trade.yaml`：
 
@@ -148,6 +152,9 @@ dataset:
   split_ratio: 0.9
   num_samples: -1
 ```
+
+`dataset.output_dir` 是独立的输出根目录，不会与 `task.output_dir` 拼接。
+转换后的 Hugging Face 数据集位于该目录下的 `dataset/` 子目录。
 
 `prompt_templates.yaml` 仍然通过 `prompt_path` 配置：
 

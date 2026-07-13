@@ -162,7 +162,6 @@ def run_batch_annotation(
     create_dataset: bool = True,
     dataset_split_ratio: Optional[Dict[str, float]] = None,
     num_samples: int = 1,
-    **kwargs,
 ) -> None:
     """Run batch annotation with parallel processing."""
     try:
@@ -189,7 +188,7 @@ def run_batch_annotation(
                 num_samples,
             )
         if create_dataset and voted_dir:
-            output_path = Path(task_config.output_dir) / Path(dataset_config.output_dir)
+            output_path = Path(dataset_config.output_dir)
             convert_to_hf_if_needed(
                 create_dataset,
                 ensemble_config,

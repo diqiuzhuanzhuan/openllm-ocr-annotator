@@ -18,7 +18,7 @@ cd "${REPO_ROOT}"
 
 python apps/app.py \
     task.input_dir=./data/images \
-    task.max_files=50 \
+    task.max_files=55 \
     task.annotators.0.type=curator \
     task.annotators.0.task=vision_extraction \
     task.annotators.0.prompt_path=./examples/prompt_templates.yaml \

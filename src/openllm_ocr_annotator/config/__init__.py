@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: MIT
 
 from .config_manager import AnnotatorConfigManager as ConfigManager
-from .config_manager import AnnotatorConfig, EnsembleConfig, TaskConfig, DatasetConfig
+from .config_manager import AppConfig, AnnotatorConfig, EnsembleConfig, TaskConfig, DatasetConfig
 from .config_manager import EnsembleStrategy
 
 __all__ = [
     "ConfigManager",
+    "AppConfig",
     "AnnotatorConfig",
     "EnsembleConfig",
     "TaskConfig",
