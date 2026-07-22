@@ -1,5 +1,5 @@
 annotators:
-  - name: "gpt"
+  - name: "openai"
     type: curator
     task: "vision_extraction"
     provider:
@@ -15,7 +15,7 @@ annotators:
     enabled: true
     prompt_path: "./examples/prompt_templates.yaml"
 
-  - name: "gpt"
+  - name: "openai"
     type: curator
     task: "vision_extraction"
     provider:

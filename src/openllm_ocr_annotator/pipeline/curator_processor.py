@@ -184,6 +184,7 @@ class CuratorAnnotatorProcessor:
         config: AnnotatorConfig,
         output_dir: Path,
         task_prompt_path: str | None = None,
+        num_samples: int | None = None,
     ):
         if curator is None:
             raise ImportError(
@@ -195,7 +196,10 @@ class CuratorAnnotatorProcessor:
         self.prompt_manager = PromptManager(
             prompt_path=config.prompt_path or task_prompt_path
         )
-        self.num_samples = max(config.num_samples or 1, 1)
+        effective_num_samples = (
+            config.num_samples if num_samples is None else num_samples
+        )
+        self.num_samples = max(effective_num_samples or 1, 1)
 
     def build_dataset(self, image_files: Iterable[Path]) -> Dataset:
         return build_image_dataset(
@@ -315,10 +319,14 @@ def run_curator_annotation(
     output_dir: Path,
     image_files: list[Path],
     task_prompt_path: str | None = None,
+    num_samples: int = 1,
 ) -> None:
     """Run all curator annotators over image files using curator's dataset model."""
     for config in annotator_configs:
         processor = CuratorAnnotatorProcessor(
-            config=config, output_dir=output_dir, task_prompt_path=task_prompt_path
+            config=config,
+            output_dir=output_dir,
+            task_prompt_path=task_prompt_path,
+            num_samples=num_samples,
         )
         processor.run(image_files)

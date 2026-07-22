@@ -79,6 +79,14 @@ def test_run_calls_curator_llm_with_dataset_and_working_dir(tmp_path):
     assert (tmp_path / "curator_test" / "gpt-4o-mini" / "a.json").exists()
 
 
+def test_task_num_samples_overrides_annotator_default(tmp_path):
+    processor = CuratorAnnotatorProcessor(
+        _config(num_samples=1), tmp_path, num_samples=2
+    )
+
+    assert processor.num_samples == 2
+
+
 def test_curator_params_prefer_nested_provider_config():
     config = _config(
         model="gpt-4o",

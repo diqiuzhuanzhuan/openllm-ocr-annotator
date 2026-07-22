@@ -49,6 +49,7 @@ def run_parallel_annotation(
     output_path: Path,
     image_files: List[Path],
     task_prompt_path: str | None = None,
+    num_samples: int = 1,
 ):
     unsupported = [
         config.type for config in annotator_configs if config.type != "curator"
@@ -62,6 +63,7 @@ def run_parallel_annotation(
         output_dir=output_path,
         image_files=image_files,
         task_prompt_path=task_prompt_path,
+        num_samples=num_samples,
     )
 
 
@@ -175,6 +177,7 @@ def run_batch_annotation(
             output_path,
             image_files,
             task_config.prompt_path,
+            num_samples,
         )
         voted_dir = None
         if ensemble_config and ensemble_config.enabled:

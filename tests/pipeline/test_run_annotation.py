@@ -31,7 +31,9 @@ def test_dataset_output_dir_is_used_as_independent_root(tmp_path):
             "openllm_ocr_annotator.pipeline.run_annotation.collect_image_files",
             return_value=[image],
         ),
-        patch("openllm_ocr_annotator.pipeline.run_annotation.run_parallel_annotation"),
+        patch(
+            "openllm_ocr_annotator.pipeline.run_annotation.run_parallel_annotation"
+        ) as annotate,
         patch(
             "openllm_ocr_annotator.pipeline.run_annotation.run_voting_and_save",
             return_value=voted_dir,
@@ -43,3 +45,41 @@ def test_dataset_output_dir_is_used_as_independent_root(tmp_path):
         run_batch_annotation(task, dataset, annotators, ensemble)
 
     assert convert.call_args.args[-1] == Path(dataset_root)
+    assert annotate.call_args.args[-1] == 1
+
+
+def test_task_num_samples_is_forwarded_to_annotation_and_voting(tmp_path):
+    task = TaskConfig(
+        task_id="task",
+        input_dir=str(tmp_path / "images"),
+        output_dir=str(tmp_path / "annotations"),
+        num_samples=2,
+    )
+    dataset = DatasetConfig(enabled=False)
+    ensemble = EnsembleConfig(enabled=True)
+    annotators = [AnnotatorConfig(model="openai/test")]
+    image = tmp_path / "image.png"
+
+    with (
+        patch(
+            "openllm_ocr_annotator.pipeline.run_annotation.collect_image_files",
+            return_value=[image],
+        ),
+        patch(
+            "openllm_ocr_annotator.pipeline.run_annotation.run_parallel_annotation"
+        ) as annotate,
+        patch(
+            "openllm_ocr_annotator.pipeline.run_annotation.run_voting_and_save"
+        ) as vote,
+    ):
+        run_batch_annotation(
+            task,
+            dataset,
+            annotators,
+            ensemble,
+            create_dataset=False,
+            num_samples=task.num_samples,
+        )
+
+    assert annotate.call_args.args[-1] == 2
+    assert vote.call_args.args[-1] == 2

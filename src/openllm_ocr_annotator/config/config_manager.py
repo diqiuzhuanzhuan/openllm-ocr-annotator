@@ -151,7 +151,7 @@ class DatasetConfig:
     format: str = "json"
     output_dir: str = "./datasets"
     split_ratio: float = 0.9
-    num_samples: int = -1  # -1 means use all available samples
+    num_samples: int = -1  # -1 amplesmeans use all available s
     enabled: bool = True
 
     @classmethod
